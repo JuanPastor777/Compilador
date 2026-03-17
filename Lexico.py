@@ -1,50 +1,77 @@
-import re
 import json
+import re
 
 class AnalizadorLexico:
 
     def __init__(self):
+        try:
+            with open("tokens.json", "r", encoding="utf-8") as f:
+                self.tokens = json.load(f)
+        except Exception as e:
+            print("Error cargando tokens.json:", e)
+            self.tokens = {}
 
-        # cargar palabras desde json
-        with open("tokens.json", "r", encoding="utf-8") as f:
-            config = json.load(f)
+    def analizar(self, texto):
+        resultado = []
 
-        self.palabras_reservadas = config["palabras_reservadas"]
-        self.simbolos = config["simbolos"]
-        self.errores = config["errores"]
+        #separar lexemas correctamente
+        patron = r'[A-Za-z]+\.[A-Za-z]+\.[A-Za-z]+|[A-Za-z]+\.[A-Za-z]+|[A-Za-z_]\w*|\d+|\(|\)|,|;|-'
+        lexemas = re.findall(patron, texto)
 
-    def analizar(self, codigo):
+        for lex in lexemas:
+            lex = lex.strip()
+            tipo = self.clasificar(lex)
+            resultado.append((lex, tipo))
 
-        tokens = []
+        return resultado
 
-        # separador de lexemas
-        patron = r'[A-Z]+\.[A-Z]+(?:\.[A-Z]+)?|[A-Za-z_][A-Za-z0-9_]*|\d+|".*?"|[(),;\-]'
-        lexemas = re.findall(patron, codigo)
+    def clasificar(self, lex):
 
-        for lexema in lexemas:
+        # Palabras reservadas y simbolos
+        if lex in self.tokens:
+            return self.tokens[lex]
 
-            # palabras reservadas
-            if lexema in self.palabras_reservadas:
-                tokens.append((lexema, self.palabras_reservadas[lexema]))
+        # 2. Numeros 
+        if lex.isdigit():
+            return "NUMERO"
 
-            # símbolos
-            elif lexema in self.simbolos:
-                tokens.append((lexema, self.simbolos[lexema]))
+        # 3. Error lexico (empieza con número y tiene letras)
+        if re.match(r'^\d+[a-zA-Z_]+', lex):
+            return "ERROR_LEXICO"
 
-            # identificadores
-            elif re.fullmatch(r'[a-zA-Z_][a-zA-Z0-9_]*', lexema):
-                tokens.append((lexema, "TOK_ID"))
+        # 4. Identificador valido
+        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', lex):
+            return "IDENTIFICADOR"
 
-            # números
-            elif re.fullmatch(r'\d+', lexema):
-                tokens.append((lexema, "TOK_NUM"))
+        # 5. Simbolos (respaldo)
+        if lex in ['(', ')', ',', ';', '-']:
+            return "SIMBOLO"
 
-            # texto libre
-            elif lexema.startswith('"') and lexema.endswith('"'):
-                tokens.append((lexema, "TOK_TEXT"))
+        # 6. Error general
+        return "ERROR_LEXICO"
 
-            # error léxico
-            else:
-                tokens.append((lexema, "ERROR_LEXICO"))
+    def mostrar_tabla(self, tokens):
+        print("\n{:<25} {:<20}".format("LEXEMA", "TIPO DE TOKEN"))
+        print("-" * 45)
+        for lex, tipo in tokens:
+            print("{:<25} {:<20}".format(lex, tipo))
 
-        return tokens
+
+# ===== PROGRAMA PRINCIPAL =====
+
+if __name__ == "__main__":
+
+    analizador = AnalizadorLexico()
+
+    print("Ingrese el codigo (Enter vacío para terminar):\n")
+
+    entrada = ""
+    while True:
+        linea = input()
+        if linea == "":
+            break
+        entrada += linea + " "
+
+    tokens = analizador.analizar(entrada)
+
+    analizador.mostrar_tabla(tokens)
