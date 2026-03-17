@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador Léxico</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1> Analizador Léxico</h1>
+        
+        <div class="main-content">
+            <!-- Panel izquierdo: Código fuente -->
+            <div class="source-panel">
+                <h2>CÓDIGO FUENTE</h2>
+                <textarea id="codigo" placeholder="Escribe tu código aquí..."></textarea>
+                <div class="buttons">
+                    <button onclick="seleccionarArchivo()">📁 Seleccionar Archivo</button>
+                    <button onclick="analizar()" class="primary">🔍 Analizar</button>
+                </div>
+            </div>
+
+            <!-- Panel derecho: Resultados -->
+            <div class="results-panel">
+                <h2>RESULTADOS DEL ANÁLISIS</h2>
+                
+                <!-- Resumen de estadísticas -->
+                <div class="stats" id="estadisticas">
+                    <div class="stat-item">
+                        <span class="stat-label">Errores:</span>
+                        <span class="stat-value" id="errores">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Advertencias:</span>
+                        <span class="stat-value" id="advertencias">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tokens únicos:</span>
+                        <span class="stat-value" id="tokens_unicos">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Variables:</span>
+                        <span class="stat-value" id="variables">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Funciones:</span>
+                        <span class="stat-value" id="funciones">0</span>
+                    </div>
+                </div>
+
+                <!-- Tabla de tokens -->
+                <h3>Tabla de Tokens</h3>
+                <div class="table-container">
+                    <table id="tabla-tokens">
+                        <thead>
+                            <tr>
+                                <th>TOKEN</th>
+                                <th>TIPO</th>
+                            </tr>
+                        </thead>
+                        <tbody id="token-body">
+                            <!-- Los tokens se insertarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Resumen por tipo -->
+                <div class="tipo-resumen" id="resumen-tipos">
+                    <!-- Resumen por tipo se mostrará aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analizar() {
+            const codigo = document.getElementById('codigo').value;
+            
+            const response = await fetch('/analizar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({codigo: codigo})
+            });
+            
+            const data = await response.json();
+            mostrarResultados(data);
+        }
+
+        function mostrarResultados(data) {
+            // Actualizar estadísticas
+            document.getElementById('errores').textContent = data.estadisticas.errores;
+            document.getElementById('advertencias').textContent = data.estadisticas.advertencias;
+            document.getElementById('tokens_unicos').textContent = data.estadisticas.tokens_unicos;
+            document.getElementById('variables').textContent = data.estadisticas.variables;
+            document.getElementById('funciones').textContent = data.estadisticas.funciones;
+
+            // Mostrar tabla de tokens
+            const tbody = document.getElementById('token-body');
+            tbody.innerHTML = '';
+            
+            data.tokens.forEach(token => {
+                const row = tbody.insertRow();
+                const cellToken = row.insertCell(0);
+                const cellTipo = row.insertCell(1);
+                
+                cellToken.innerHTML = `<span style="color: ${token.color}">${token.lexema}</span>`;
+                cellTipo.textContent = token.tipo;
+            });
+
+            // Mostrar resumen por tipo
+            const resumen = document.getElementById('resumen-tipos');
+            resumen.innerHTML = '<h3>Resumen por tipo:</h3>';
+            
+            Object.entries(data.estadisticas.conteo_tipos).forEach(([tipo, cantidad]) => {
+                resumen.innerHTML += `<div>${tipo}: ${cantidad}</div>`;
+            });
+        }
+
+        function seleccionarArchivo() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.txt,.js,.py';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('codigo').value = e.target.result;
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        }
+    </script>
+</body>
+</html>
