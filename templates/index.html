@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador Léxico Profesional</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- CodeMirror CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +18,9 @@
             <!-- Panel izquierdo: Código fuente -->
             <div class="source-panel">
                 <h2>Código Fuente</h2>
-                <textarea id="codigo" placeholder="Escribe tu código aquí..."></textarea>
+                <div class="code-editor-wrapper">
+                    <textarea id="codigo" placeholder="Escribe tu código aquí..."></textarea>
+                </div>
                 <div class="buttons">
                     <button onclick="seleccionarArchivo()">📁 Seleccionar Archivo</button>
                     <button onclick="analizar()" class="primary" id="analyze-btn">🔍 Analizar</button>
@@ -42,6 +47,9 @@
                                 <span class="token-example">MENU</span>
                                 <span class="token-example">CRE.USR</span>
                                 <span class="token-example">CRE.GRP</span>
+                                <span class="token-example">CRE.TAR</span>
+                                <span class="token-example">DES</span>
+                                <span class="token-example">FEC</span>
                             </div>
                         </div>
 
@@ -83,6 +91,7 @@
                             <div class="token-examples">
                                 <span class="token-example">2024-03-18</span>
                                 <span class="token-example">2024-12-31</span>
+                                <span class="token-example">2026-03-01</span>
                             </div>
                         </div>
 
@@ -96,6 +105,7 @@
                             <div class="token-examples">
                                 <span class="token-example">"descripción"</span>
                                 <span class="token-example">'título'</span>
+                                <span class="token-example">(Modelo ER y normalización)</span>
                             </div>
                         </div>
 
@@ -196,14 +206,113 @@
         </div>
     </div>
 
+    <!-- CodeMirror JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
     <script>
+        // Inicializar CodeMirror cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar el editor
+            var editor = CodeMirror.fromTextArea(document.getElementById('codigo'), {
+                lineNumbers: true,
+                mode: 'lenguaje-analizador',
+                theme: 'eclipse',
+                indentUnit: 4,
+                smartIndent: true,
+                lineWrapping: true,
+                matchBrackets: true,
+                autoCloseBrackets: true,
+                placeholder: 'Escribe tu código aquí...',
+                extraKeys: {
+                    "Ctrl-Space": "autocomplete"
+                }
+            });
+
+            // Guardar el editor en una variable global para usarlo en otras funciones
+            window.codeEditor = editor;
+
+            // Configurar el resaltado personalizado para tu lenguaje
+            CodeMirror.defineMode("lenguaje-analizador", function() {
+                return {
+                    token: function(stream, state) {
+                        // Palabras reservadas (comandos principales)
+                        if (stream.match(/REG\.USR|ING\.USR|SALIR|MENU|CRE\.USR|CRE\.GRP|CRE\.TAR|DES|FEC/)) {
+                            return 'keyword';
+                        }
+
+                        // Estados
+                        if (stream.match(/EST\.PEN|EST\.ACT|EST\.FIN/)) {
+                            return 'keyword';
+                        }
+
+                        // Prioridades
+                        if (stream.match(/PRI\.ALT|PRI\.MED|PRI\.BAJ/)) {
+                            return 'keyword';
+                        }
+
+                        // Fechas (formato YYYY-MM-DD)
+                        if (stream.match(/\d{4}-\d{2}-\d{2}/)) {
+                            return 'date';
+                        }
+
+                        // Números
+                        if (stream.match(/\b\d+\b/)) {
+                            return 'number';
+                        }
+
+                        // Texto entre comillas
+                        if (stream.match(/"[^"]*"/) || stream.match(/'[^']*'/)) {
+                            return 'string';
+                        }
+
+                        // Texto entre paréntesis (como en DES("..."))
+                        if (stream.match(/\([^)]*\)/)) {
+                            return 'string';
+                        }
+
+                        // Identificadores (palabras normales)
+                        if (stream.match(/[a-zA-Z_][a-zA-Z0-9_]*/)) {
+                            return 'identifier';
+                        }
+
+                        // Símbolos y delimitadores
+                        if (stream.match(/[\(\){},;]/)) {
+                            return 'symbol';
+                        }
+
+                        // Operadores
+                        if (stream.match(/[=<>!+\-*/]/)) {
+                            return 'operator';
+                        }
+
+                        // Avanzar un carácter si no hay match
+                        stream.next();
+                        return null;
+                    }
+                };
+            });
+
+            // Establecer el modo personalizado
+            editor.setOption('mode', 'lenguaje-analizador');
+
+            // Cargar el código de ejemplo
+            editor.setValue(`CRE.TAR(Modelo ER y normalización)
+DES(Diseño del modelo y reglas)
+FEC(2026-03-01)
+PRI.ALT
+EST.PEN;`);
+
+            // Expandir manual por defecto
+            setTimeout(() => {
+                toggleManual();
+            }, 500);
+        });
+
         let analyzing = false;
 
         async function analizar() {
-            const codigo = document.getElementById('codigo').value;
+            const codigo = window.codeEditor.getValue(); // Obtener código del editor
             const analyzeBtn = document.getElementById('analyze-btn');
 
-            // Simular proceso de análisis con animación
             analyzeBtn.classList.add('analyzing-token');
             analyzing = true;
 
@@ -218,7 +327,6 @@
 
                 const data = await response.json();
 
-                // Pequeña pausa para mostrar la animación
                 setTimeout(() => {
                     mostrarResultados(data);
                     analyzeBtn.classList.remove('analyzing-token');
@@ -259,22 +367,12 @@
                     cellToken.innerHTML = `<span class="${tipoClass}" style="color: ${token.color}">${token.lexema}</span>`;
                     cellTipo.innerHTML = `<span class="${tipoClass}">${token.tipo}</span>`;
 
-                    // Animación de entrada
                     setTimeout(() => {
                         row.style.transition = 'all 0.3s ease';
                         row.style.opacity = '1';
                         row.style.transform = 'translateY(0)';
                     }, 50);
-
-                    // Resaltar token en el código (simulado)
-                    if (index === data.tokens.length - 1) {
-                        setTimeout(() => {
-                            tbody.querySelectorAll('tr').forEach(r => {
-                                r.style.backgroundColor = '';
-                            });
-                        }, 300);
-                    }
-                }, index * 100); // Animación escalonada
+                }, index * 100);
             });
 
             // Mostrar resumen por tipo
@@ -290,12 +388,12 @@
         function seleccionarArchivo() {
             const input = document.createElement('input');
             input.type = 'file';
-            input.accept = '.txt,.js,.py';
+            input.accept = '.txt';
             input.onchange = function(e) {
                 const file = e.target.files[0];
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById('codigo').value = e.target.result;
+                    window.codeEditor.setValue(e.target.result);
                 };
                 reader.readAsText(file);
             };
@@ -314,13 +412,6 @@
                 toggle.textContent = '▲';
             }
         }
-
-        // Expandir manual por defecto
-        document.addEventListener('DOMContentLoaded', function() {
-            setTimeout(() => {
-                toggleManual();
-            }, 500);
-        });
     </script>
 </body>
 </html>

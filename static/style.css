@@ -18,6 +18,15 @@
     --shadow-sm: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 20px 25px -5px rgb(0 0 0 / 0.1);
+
+    /* Colores para resaltado de sintaxis */
+    --keyword-color: #0a2472;
+    --string-color: #475569;
+    --number-color: #22c55e;
+    --date-color: #86efac;
+    --symbol-color: #f97316;
+    --delimiter-color: #3b82f6;
+    --identifier-color: #1e3a8a;
 }
 
 * {
@@ -97,28 +106,67 @@ h3 {
     margin-bottom: 16px;
 }
 
-textarea {
-    width: 100%;
-    height: 300px;
-    padding: 20px;
+/* Estilos para CodeMirror */
+.code-editor-wrapper {
+    position: relative;
+    margin-bottom: 20px;
     border: 2px solid var(--border);
     border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: var(--bone);
+}
+
+.code-editor-wrapper:focus-within {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.CodeMirror {
+    height: 350px;
     font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
-    resize: vertical;
-    margin-bottom: 20px;
     background-color: var(--bone);
     color: var(--text-dark);
-    transition: all 0.3s ease;
-    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+    border-radius: 14px;
+    padding: 5px 0;
 }
 
-textarea:focus {
-    outline: none;
-    border-color: var(--primary-light);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
-    background-color: white;
+.CodeMirror-gutters {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-right: 1px solid var(--border);
+    border-radius: 14px 0 0 14px;
+}
+
+.CodeMirror-linenumber {
+    color: var(--text-light);
+    padding: 0 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+}
+
+.CodeMirror-cursor {
+    border-left-color: var(--primary);
+}
+
+.CodeMirror-selected {
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+/* Colores personalizados para los tokens */
+.cm-keyword { color: #0a2472; font-weight: 600; }
+.cm-identifier { color: #1e3a8a; }
+.cm-number { color: #22c55e; }
+.cm-date { color: #86efac; font-weight: 500; }
+.cm-string { color: #475569; }
+.cm-symbol { color: #f97316; }
+.cm-operator { color: #3b82f6; }
+
+/* Placeholder de CodeMirror */
+.CodeMirror-empty {
+    color: var(--text-light);
+    font-style: italic;
 }
 
 .buttons {
@@ -402,6 +450,16 @@ tr:hover td {
     transition: background-color 0.3s ease;
 }
 
+/* Colores específicos para tipos de tokens en resultados */
+.token-palabra-reservada { color: var(--primary-dark); font-weight: 600; }
+.token-identificador { color: var(--primary); }
+.token-numero { color: var(--success-dark); }
+.token-simbolo { color: var(--warning); }
+.token-delimitador { color: var(--primary-light); }
+.token-fecha { color: var(--success); }
+.token-texto { color: var(--text-light); }
+.token-error { color: var(--danger); font-weight: 500; background-color: var(--danger-light); }
+
 /* Responsive */
 @media (max-width: 1024px) {
     .main-content {
@@ -433,14 +491,8 @@ tr:hover td {
     button {
         width: 100%;
     }
-}
 
-/* Colores específicos para tipos de tokens */
-.token-palabra-reservada { color: var(--primary-dark); font-weight: 600; }
-.token-identificador { color: var(--primary); }
-.token-numero { color: var(--success-dark); }
-.token-simbolo { color: var(--warning); }
-.token-delimitador { color: var(--primary-light); }
-.token-fecha { color: var(--success); }
-.token-texto { color: var(--text-light); }
-.token-error { color: var(--danger); font-weight: 500; background-color: var(--danger-light); }
+    .CodeMirror {
+        height: 250px;
+    }
+}
