@@ -1,6 +1,7 @@
 import json
 import re
 
+
 class AnalizadorLexico:
 
     def __init__(self):
@@ -14,50 +15,84 @@ class AnalizadorLexico:
     def analizar(self, texto):
         resultado = []
 
-        #separar lexemas correctamente
-        patron = r'[A-Za-z]+\.[A-Za-z]+\.[A-Za-z]+|[A-Za-z]+\.[A-Za-z]+|[A-Za-z_]\w*|\d+|\(|\)|,|;|-'
-        lexemas = re.findall(patron, texto)
+        texto = texto.replace("(", " ( ").replace(")", " ) ") \
+            .replace(",", " , ").replace(";", " ; ")
 
-        for lex in lexemas:
-            lex = lex.strip()
-            tipo = self.clasificar(lex)
-            resultado.append((lex, tipo))
+        partes = [p for p in texto.split() if p.strip()]
+
+        dentro_parentesis = False
+
+        for parte in partes:
+
+            if parte == "(":
+                dentro_parentesis = True
+                resultado.append((parte, self.tokens.get(parte, "DELIMITADOR")))
+                continue
+
+            if parte == ")":
+                dentro_parentesis = False
+                resultado.append((parte, self.tokens.get(parte, "DELIMITADOR")))
+                continue
+
+            tipo = self.clasificar(parte, dentro_parentesis)
+            resultado.append((parte, tipo))
 
         return resultado
 
-    def clasificar(self, lex):
+    def clasificar(self, lex, dentro_parentesis):
+        lex = lex.strip()
 
-        # Palabras reservadas y simbolos
+        if not lex:
+            return "ERROR_LEXICO"
+        
         if lex in self.tokens:
             return self.tokens[lex]
 
-        # 2. Numeros 
+        if re.fullmatch(r'\d{4}-\d{2}-\d{2}', lex):
+            if self.fecha_valida(lex):
+                return "FECHA"
+            return "ERR_INV_DATE"
+
+        if dentro_parentesis:
+            return "TEXTO"
+
         if lex.isdigit():
             return "NUMERO"
 
-        # 3. Error lexico (empieza con número y tiene letras)
-        if re.match(r'^\d+[a-zA-Z_]+', lex):
-            return "ERROR_LEXICO"
-
-        # 4. Identificador valido
-        if re.match(r'^[a-zA-Z_][a-zA-Z0-9_]*$', lex):
+        if re.fullmatch(r'[a-z][a-z0-9_]*', lex):
             return "IDENTIFICADOR"
+        
+        if re.fullmatch(r'[A-Za-zÁÉÍÓÚáéíóúñÑ]+', lex):
+            return "TEXTO"
 
-        # 5. Simbolos (respaldo)
-        if lex in ['(', ')', ',', ';', '-']:
-            return "SIMBOLO"
+        if lex in ["(", ")", ",", ";", "-"]:
+            if lex in [",", "-"]:
+                return "SIMBOLO"
+            return "DELIMITADOR"
 
-        # 6. Error general
         return "ERROR_LEXICO"
 
+    def fecha_valida(self, fecha):
+        try:
+            anio, mes, dia = map(int, fecha.split("-"))
+            if 1 <= mes <= 12 and 1 <= dia <= 31:
+                dias_por_mes = [31, 29 if self.es_bisiesto(anio) else 28, 31, 30, 31, 30,
+                                31, 31, 30, 31, 30, 31]
+                return dia <= dias_por_mes[mes - 1]
+            return False
+        except:
+            return False
+
+    def es_bisiesto(self, anio):
+        return anio % 4 == 0 and (anio % 100 != 0 or anio % 400 == 0)
+
     def mostrar_tabla(self, tokens):
-        print("\n{:<25} {:<20}".format("LEXEMA", "TIPO DE TOKEN"))
-        print("-" * 45)
+        print("\n{:<30} {:<20}".format("LEXEMA", "TIPO DE TOKEN"))
+        print("-" * 55)
         for lex, tipo in tokens:
-            print("{:<25} {:<20}".format(lex, tipo))
+            print("{:<30} {:<20}".format(lex, tipo))
 
 
-# ===== PROGRAMA PRINCIPAL =====
 
 if __name__ == "__main__":
 
