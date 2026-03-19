@@ -3,60 +3,182 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Léxico</title>
+    <title>Analizador Léxico Profesional</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1> Analizador Léxico</h1>
-        
+        <h1>Analizador Léxico</h1>
+
         <div class="main-content">
             <!-- Panel izquierdo: Código fuente -->
             <div class="source-panel">
-                <h2>CÓDIGO FUENTE</h2>
+                <h2>Código Fuente</h2>
                 <textarea id="codigo" placeholder="Escribe tu código aquí..."></textarea>
                 <div class="buttons">
                     <button onclick="seleccionarArchivo()">📁 Seleccionar Archivo</button>
-                    <button onclick="analizar()" class="primary">🔍 Analizar</button>
+                    <button onclick="analizar()" class="primary" id="analyze-btn">🔍 Analizar</button>
+                </div>
+
+                <!-- Diccionario / Manual del lenguaje -->
+                <div class="language-manual">
+                    <div class="manual-header" onclick="toggleManual()">
+                        <h3>📚 Manual del Lenguaje</h3>
+                        <span class="toggle-icon" id="manualToggle">▼</span>
+                    </div>
+                    <div class="manual-content" id="manualContent">
+                        <!-- Palabras Reservadas -->
+                        <div class="token-category" style="border-left-color: #0a2472;">
+                            <div class="category-title">
+                                <span style="color: #0a2472; font-weight: 700;">■</span>
+                                Palabras Reservadas
+                            </div>
+                            <div class="example-description">Comandos principales del lenguaje</div>
+                            <div class="token-examples">
+                                <span class="token-example">REG.USR</span>
+                                <span class="token-example">ING.USR</span>
+                                <span class="token-example">SALIR</span>
+                                <span class="token-example">MENU</span>
+                                <span class="token-example">CRE.USR</span>
+                                <span class="token-example">CRE.GRP</span>
+                            </div>
+                        </div>
+
+                        <!-- Identificadores -->
+                        <div class="token-category" style="border-left-color: #1e3a8a;">
+                            <div class="category-title">
+                                <span style="color: #1e3a8a; font-weight: 700;">■</span>
+                                Identificadores
+                            </div>
+                            <div class="example-description">Nombres de variables, funciones, etc.</div>
+                            <div class="token-examples">
+                                <span class="token-example">usuario1</span>
+                                <span class="token-example">nombre_tarea</span>
+                                <span class="token-example">fecha_limite</span>
+                            </div>
+                        </div>
+
+                        <!-- Números -->
+                        <div class="token-category" style="border-left-color: #22c55e;">
+                            <div class="category-title">
+                                <span style="color: #22c55e; font-weight: 700;">■</span>
+                                Números
+                            </div>
+                            <div class="example-description">Valores numéricos enteros</div>
+                            <div class="token-examples">
+                                <span class="token-example">123</span>
+                                <span class="token-example">456</span>
+                                <span class="token-example">7890</span>
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="token-category" style="border-left-color: #86efac;">
+                            <div class="category-title">
+                                <span style="color: #86efac; font-weight: 700;">■</span>
+                                Fechas
+                            </div>
+                            <div class="example-description">Formato AAAA-MM-DD</div>
+                            <div class="token-examples">
+                                <span class="token-example">2024-03-18</span>
+                                <span class="token-example">2024-12-31</span>
+                            </div>
+                        </div>
+
+                        <!-- Texto -->
+                        <div class="token-category" style="border-left-color: #475569;">
+                            <div class="category-title">
+                                <span style="color: #475569; font-weight: 700;">■</span>
+                                Texto
+                            </div>
+                            <div class="example-description">Cadenas de texto dentro de paréntesis</div>
+                            <div class="token-examples">
+                                <span class="token-example">"descripción"</span>
+                                <span class="token-example">'título'</span>
+                            </div>
+                        </div>
+
+                        <!-- Símbolos y Delimitadores -->
+                        <div class="token-category" style="border-left-color: #f97316;">
+                            <div class="category-title">
+                                <span style="color: #f97316; font-weight: 700;">■</span>
+                                Símbolos y Delimitadores
+                            </div>
+                            <div class="example-description">Signos de puntuación y agrupación</div>
+                            <div class="token-examples">
+                                <span class="token-example">(</span>
+                                <span class="token-example">)</span>
+                                <span class="token-example">,</span>
+                                <span class="token-example">;</span>
+                                <span class="token-example">-</span>
+                            </div>
+                        </div>
+
+                        <!-- Estados y Prioridades -->
+                        <div class="token-category" style="border-left-color: #0a2472;">
+                            <div class="category-title">
+                                <span style="color: #0a2472; font-weight: 700;">■</span>
+                                Estados
+                            </div>
+                            <div class="token-examples">
+                                <span class="token-example">EST.PEN</span>
+                                <span class="token-example">EST.ACT</span>
+                                <span class="token-example">EST.FIN</span>
+                            </div>
+                        </div>
+
+                        <div class="token-category" style="border-left-color: #0a2472;">
+                            <div class="category-title">
+                                <span style="color: #0a2472; font-weight: 700;">■</span>
+                                Prioridades
+                            </div>
+                            <div class="token-examples">
+                                <span class="token-example">PRI.ALT</span>
+                                <span class="token-example">PRI.MED</span>
+                                <span class="token-example">PRI.BAJ</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Panel derecho: Resultados -->
             <div class="results-panel">
-                <h2>RESULTADOS DEL ANÁLISIS</h2>
-                
+                <h2>Resultados del Análisis</h2>
+
                 <!-- Resumen de estadísticas -->
                 <div class="stats" id="estadisticas">
                     <div class="stat-item">
-                        <span class="stat-label">Errores:</span>
+                        <span class="stat-label">Errores</span>
                         <span class="stat-value" id="errores">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Advertencias:</span>
+                        <span class="stat-label">Advertencias</span>
                         <span class="stat-value" id="advertencias">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Tokens únicos:</span>
+                        <span class="stat-label">Tokens únicos</span>
                         <span class="stat-value" id="tokens_unicos">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Variables:</span>
+                        <span class="stat-label">Variables</span>
                         <span class="stat-value" id="variables">0</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-label">Funciones:</span>
+                        <span class="stat-label">Funciones</span>
                         <span class="stat-value" id="funciones">0</span>
                     </div>
                 </div>
 
-                <!-- Tabla de tokens -->
+                <!-- Tabla de tokens con animación -->
                 <h3>Tabla de Tokens</h3>
                 <div class="table-container">
                     <table id="tabla-tokens">
                         <thead>
                             <tr>
-                                <th>TOKEN</th>
-                                <th>TIPO</th>
+                                <th>Token</th>
+                                <th>Tipo</th>
                             </tr>
                         </thead>
                         <tbody id="token-body">
@@ -67,6 +189,7 @@
 
                 <!-- Resumen por tipo -->
                 <div class="tipo-resumen" id="resumen-tipos">
+                    <h3>Resumen por tipo</h3>
                     <!-- Resumen por tipo se mostrará aquí -->
                 </div>
             </div>
@@ -74,19 +197,39 @@
     </div>
 
     <script>
+        let analyzing = false;
+
         async function analizar() {
             const codigo = document.getElementById('codigo').value;
-            
-            const response = await fetch('/analizar', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({codigo: codigo})
-            });
-            
-            const data = await response.json();
-            mostrarResultados(data);
+            const analyzeBtn = document.getElementById('analyze-btn');
+
+            // Simular proceso de análisis con animación
+            analyzeBtn.classList.add('analyzing-token');
+            analyzing = true;
+
+            try {
+                const response = await fetch('/analizar', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({codigo: codigo})
+                });
+
+                const data = await response.json();
+
+                // Pequeña pausa para mostrar la animación
+                setTimeout(() => {
+                    mostrarResultados(data);
+                    analyzeBtn.classList.remove('analyzing-token');
+                    analyzing = false;
+                }, 500);
+
+            } catch (error) {
+                console.error('Error:', error);
+                analyzeBtn.classList.remove('analyzing-token');
+                analyzing = false;
+            }
         }
 
         function mostrarResultados(data) {
@@ -97,25 +240,50 @@
             document.getElementById('variables').textContent = data.estadisticas.variables;
             document.getElementById('funciones').textContent = data.estadisticas.funciones;
 
-            // Mostrar tabla de tokens
+            // Mostrar tabla de tokens con animación
             const tbody = document.getElementById('token-body');
             tbody.innerHTML = '';
-            
-            data.tokens.forEach(token => {
-                const row = tbody.insertRow();
-                const cellToken = row.insertCell(0);
-                const cellTipo = row.insertCell(1);
-                
-                cellToken.innerHTML = `<span style="color: ${token.color}">${token.lexema}</span>`;
-                cellTipo.textContent = token.tipo;
+
+            data.tokens.forEach((token, index) => {
+                setTimeout(() => {
+                    const row = tbody.insertRow();
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(10px)';
+
+                    const cellToken = row.insertCell(0);
+                    const cellTipo = row.insertCell(1);
+
+                    // Aplicar clase según tipo para colores consistentes
+                    const tipoClass = 'token-' + token.tipo.toLowerCase().replace('_', '-');
+
+                    cellToken.innerHTML = `<span class="${tipoClass}" style="color: ${token.color}">${token.lexema}</span>`;
+                    cellTipo.innerHTML = `<span class="${tipoClass}">${token.tipo}</span>`;
+
+                    // Animación de entrada
+                    setTimeout(() => {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, 50);
+
+                    // Resaltar token en el código (simulado)
+                    if (index === data.tokens.length - 1) {
+                        setTimeout(() => {
+                            tbody.querySelectorAll('tr').forEach(r => {
+                                r.style.backgroundColor = '';
+                            });
+                        }, 300);
+                    }
+                }, index * 100); // Animación escalonada
             });
 
             // Mostrar resumen por tipo
             const resumen = document.getElementById('resumen-tipos');
-            resumen.innerHTML = '<h3>Resumen por tipo:</h3>';
-            
+            resumen.innerHTML = '<h3>Resumen por tipo</h3>';
+
             Object.entries(data.estadisticas.conteo_tipos).forEach(([tipo, cantidad]) => {
-                resumen.innerHTML += `<div>${tipo}: ${cantidad}</div>`;
+                const tipoClass = 'token-' + tipo.toLowerCase().replace('_', '-');
+                resumen.innerHTML += `<div class="${tipoClass}">${tipo}: ${cantidad}</div>`;
             });
         }
 
@@ -133,6 +301,26 @@
             };
             input.click();
         }
+
+        function toggleManual() {
+            const content = document.getElementById('manualContent');
+            const toggle = document.getElementById('manualToggle');
+
+            if (content.classList.contains('expanded')) {
+                content.classList.remove('expanded');
+                toggle.textContent = '▼';
+            } else {
+                content.classList.add('expanded');
+                toggle.textContent = '▲';
+            }
+        }
+
+        // Expandir manual por defecto
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                toggleManual();
+            }, 500);
+        });
     </script>
 </body>
 </html>
