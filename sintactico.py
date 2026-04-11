@@ -92,12 +92,44 @@ class AnalizadorSintactico:
         if lexema.startswith("ROL."):
             return self.rol()
 
+        # ===== NUEVAS SENTENCIAS (IDEA #4, #5, #6, #7) =====
+
+        if lexema == "REC.TAR":
+            return self.tarea_recurrente()
+
+        if lexema == "ETIQ.TAR":
+            return self.etiquetar_tarea()
+
+        if lexema == "FILTRO.TAR":
+            return self.filtrar_tareas()
+
+        if lexema == "VER.VISTA":
+            return self.ver_vista()
+
+        if lexema == "NOTIF.CUANDO":
+            return self.notificacion_cuando()
+
+        if lexema == "NOTIF.RECORDAR":
+            return self.notificacion_recordar()
+
+        if lexema == "SUSCRIBIR":
+            return self.suscribir()
+
+        if lexema == "IMPORT":
+            return self.importar()
+
+        if lexema == "EXPORTAR.TAR":
+            return self.exportar_tarea()
+
+        if lexema == "USAR.BIB":
+            return self.usar_biblioteca()
+
         raise Exception(
             f"Error sintáctico: sentencia no válida '{lexema}'"
         )
 
     # =============================
-    # CRE.USR
+    # CRE.USR (original)
     # =============================
 
     def crear_usuario(self):
@@ -189,7 +221,8 @@ class AnalizadorSintactico:
 
         lexema, tipo = token
 
-        if tipo == "FECHA":
+        # Permitir fechas normales O fechas inteligentes
+        if tipo == "FECHA" or tipo == "FECHA_INTELIGENTE":
             nodo.agregar(Nodo(lexema))
             self.avanzar()
         else:
@@ -300,7 +333,7 @@ class AnalizadorSintactico:
         return nodo
 
     # =============================
-    # TEXTO COMPLETO
+    # TEXTO COMPLETO (original)
     # =============================
 
     def texto_completo(self):
@@ -330,9 +363,258 @@ class AnalizadorSintactico:
 
         return " ".join(palabras)
 
+    # ==================================================
+    # NUEVAS FUNCIONES (IDEA #4, #5, #6, #7)
+    # ==================================================
+
+    # ------------------------------
+    # IDEA #4: FECHAS RECURRENTES
+    # ------------------------------
+
+    def tarea_recurrente(self):
+
+        nodo = Nodo("TAREA_RECURRENTE")
+
+        nodo.agregar(self.consumir("REC.TAR"))
+        nodo.agregar(self.consumir("("))
+
+        nombre = self.texto_completo()
+        nodo.agregar(Nodo(nombre))
+
+        nodo.agregar(self.consumir(")"))
+
+        nodo.agregar(self.consumir("CADA"))
+
+        token = self.actual()
+        lexema, tipo = token
+        if lexema not in ["SEMANA", "DIA"]:
+            raise Exception("Error sintáctico: se esperaba SEMANA o DIA")
+        nodo.agregar(Nodo(lexema))
+        self.avanzar()
+
+        nodo.agregar(self.consumir("A"))
+
+        hora = self.texto_completo()
+        nodo.agregar(Nodo(hora))
+
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    # ------------------------------
+    # IDEA #5: ETIQUETAS Y FILTROS
+    # ------------------------------
+
+    def etiquetar_tarea(self):
+
+        nodo = Nodo("ETIQUETAR_TAREA")
+
+        nodo.agregar(self.consumir("ETIQ.TAR"))
+        nodo.agregar(self.consumir("("))
+
+        tarea = self.texto_completo()
+        nodo.agregar(Nodo(tarea))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir("AGREGAR"))
+        nodo.agregar(self.consumir("("))
+
+        while True:
+            etq = self.texto_completo()
+            nodo.agregar(Nodo(etq))
+            token = self.actual()
+            if token and token[0] == ",":
+                self.avanzar()
+                continue
+            break
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    def filtrar_tareas(self):
+
+        nodo = Nodo("FILTRAR_TAREAS")
+
+        nodo.agregar(self.consumir("FILTRO.TAR"))
+        nodo.agregar(self.consumir("("))
+
+        condicion = []
+        while True:
+            token = self.actual()
+            if token is None:
+                break
+            lexema, tipo = token
+            if lexema == ")":
+                break
+            condicion.append(lexema)
+            self.avanzar()
+
+        nodo.agregar(Nodo(" ".join(condicion)))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir("→"))
+        nodo.agregar(self.consumir("VISTA"))
+        nodo.agregar(self.consumir("("))
+
+        nombre_vista = self.texto_completo()
+        nodo.agregar(Nodo(nombre_vista))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    def ver_vista(self):
+
+        nodo = Nodo("VER_VISTA")
+
+        nodo.agregar(self.consumir("VER.VISTA"))
+        nodo.agregar(self.consumir("("))
+
+        nombre = self.texto_completo()
+        nodo.agregar(Nodo(nombre))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    # ------------------------------
+    # IDEA #6: NOTIFICACIONES
+    # ------------------------------
+
+    def notificacion_cuando(self):
+
+        nodo = Nodo("NOTIFICACION_CUANDO")
+
+        nodo.agregar(self.consumir("NOTIF.CUANDO"))
+        nodo.agregar(self.consumir("("))
+
+        condicion = self.texto_completo()
+        nodo.agregar(Nodo(condicion))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir("ENVIAR"))
+        nodo.agregar(self.consumir("("))
+
+        usuario = self.texto_completo()
+        nodo.agregar(Nodo(usuario))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    def notificacion_recordar(self):
+
+        nodo = Nodo("NOTIFICACION_RECORDAR")
+
+        nodo.agregar(self.consumir("NOTIF.RECORDAR"))
+        nodo.agregar(self.consumir("("))
+
+        usuario = self.texto_completo()
+        nodo.agregar(Nodo(usuario))
+
+        nodo.agregar(self.consumir(","))
+
+        fecha = self.texto_completo()
+        nodo.agregar(Nodo(fecha))
+
+        nodo.agregar(self.consumir(","))
+
+        mensaje = self.texto_completo()
+        nodo.agregar(Nodo(mensaje))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    def suscribir(self):
+
+        nodo = Nodo("SUSCRIBIR")
+
+        nodo.agregar(self.consumir("SUSCRIBIR"))
+        nodo.agregar(self.consumir("("))
+
+        usuario = self.texto_completo()
+        nodo.agregar(Nodo(usuario))
+
+        nodo.agregar(self.consumir(","))
+
+        nodo.agregar(self.consumir("TAR"))
+        nodo.agregar(self.consumir("("))
+
+        tarea = self.texto_completo()
+        nodo.agregar(Nodo(tarea))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    # ------------------------------
+    # IDEA #7: IMPORTACIÓN Y MODULARIDAD
+    # ------------------------------
+
+    def importar(self):
+
+        nodo = Nodo("IMPORTAR")
+
+        nodo.agregar(self.consumir("IMPORT"))
+        nodo.agregar(self.consumir("("))
+
+        archivo = self.texto_completo()
+        nodo.agregar(Nodo(archivo))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    def exportar_tarea(self):
+
+        nodo = Nodo("EXPORTAR_TAREA")
+
+        nodo.agregar(self.consumir("EXPORTAR.TAR"))
+        nodo.agregar(self.consumir("("))
+
+        tarea = self.texto_completo()
+        nodo.agregar(Nodo(tarea))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir("A"))
+        nodo.agregar(self.consumir("("))
+
+        archivo = self.texto_completo()
+        nodo.agregar(Nodo(archivo))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
+    def usar_biblioteca(self):
+
+        nodo = Nodo("USAR_BIBLIOTECA")
+
+        nodo.agregar(self.consumir("USAR.BIB"))
+        nodo.agregar(self.consumir("("))
+
+        biblioteca = self.texto_completo()
+        nodo.agregar(Nodo(biblioteca))
+
+        nodo.agregar(self.consumir(")"))
+        nodo.agregar(self.consumir(";"))
+
+        return nodo
+
 
 # =====================================
-# MAIN DENTRO DEL SINTACTICO
+# MAIN
 # =====================================
 
 if __name__ == "__main__":

@@ -16,7 +16,7 @@ class AnalizadorLexico:
         resultado = []
 
         texto = texto.replace("(", " ( ").replace(")", " ) ") \
-            .replace(",", " , ").replace(";", " ; ")
+            .replace(",", " , ").replace(";", " ; ").replace("→", " → ")
 
         partes = [p for p in texto.split() if p.strip()]
 
@@ -44,14 +44,26 @@ class AnalizadorLexico:
 
         if not lex:
             return "ERROR_LEXICO"
-        
+
         if lex in self.tokens:
             return self.tokens[lex]
 
+        # FECHAS INTELIGENTES (IDEA #4)
         if re.fullmatch(r'\d{4}-\d{2}-\d{2}', lex):
             if self.fecha_valida(lex):
                 return "FECHA"
             return "ERR_INV_DATE"
+
+        if re.fullmatch(r'HOY\+\d+', lex):
+            return "FECHA_INTELIGENTE"
+        if re.fullmatch(r'PROX\.(LUN|MAR|MIE|JUE|VIE|SAB|DOM)', lex):
+            return "FECHA_INTELIGENTE"
+        if lex == "FIN.MES":
+            return "FECHA_INTELIGENTE"
+
+        # HORA para notificaciones (IDEA #6)
+        if re.fullmatch(r'\d{2}:\d{2}', lex):
+            return "HORA"
 
         if dentro_parentesis:
             return "TEXTO"
@@ -61,12 +73,12 @@ class AnalizadorLexico:
 
         if re.fullmatch(r'[a-z][a-z0-9_]*', lex):
             return "IDENTIFICADOR"
-        
+
         if re.fullmatch(r'[A-Za-zÁÉÍÓÚáéíóúñÑ]+', lex):
             return "TEXTO"
 
-        if lex in ["(", ")", ",", ";", "-"]:
-            if lex in [",", "-"]:
+        if lex in ["(", ")", ",", ";", "-", "+", "→"]:
+            if lex in [",", "-", "+", "→"]:
                 return "SIMBOLO"
             return "DELIMITADOR"
 
@@ -91,7 +103,6 @@ class AnalizadorLexico:
         print("-" * 55)
         for lex, tipo in tokens:
             print("{:<30} {:<20}".format(lex, tipo))
-
 
 
 if __name__ == "__main__":
