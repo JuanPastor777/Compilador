@@ -3,415 +3,729 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Léxico Profesional</title>
+    <title>Compilador — Lenguaje de Gestión de Proyectos</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <!-- CodeMirror CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* ── Tabs ── */
+        .tabs-wrapper {
+            display: flex;
+            gap: 0;
+            margin-bottom: 28px;
+            border-bottom: 3px solid #e2e8f0;
+        }
+        .tab-btn {
+            padding: 14px 32px;
+            border: none;
+            background: transparent;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #64748b;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -3px;
+            border-radius: 0;
+            box-shadow: none;
+            transform: none !important;
+            letter-spacing: 0.3px;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .tab-btn:hover { color: #1e3a8a; }
+        .tab-btn.active {
+            color: #0a2472;
+            border-bottom-color: #3b82f6;
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── Árbol texto ── */
+        .arbol-texto {
+            background: #0f172a;
+            color: #86efac;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            line-height: 1.7;
+            padding: 20px;
+            border-radius: 14px;
+            overflow-x: auto;
+            white-space: pre;
+            max-height: 480px;
+            overflow-y: auto;
+            border: 1px solid #1e3a8a;
+        }
+
+        /* ── Árbol visual (SVG) ── */
+        #arbol-visual-wrap {
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            overflow: auto;
+            max-height: 500px;
+            background: #f8fafc;
+        }
+        #arbol-svg { display: block; }
+        .svg-node rect {
+            rx: 8; ry: 8;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,.12));
+        }
+        .svg-node text { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+        /* ── Banner resultado ── */
+        .resultado-banner {
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .resultado-banner.ok  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .resultado-banner.err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+        .resultado-banner.idle{ background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+
+        /* ── Stats sintáctico ── */
+        .stats-sint {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .stat-sint {
+            background: linear-gradient(135deg, #0a2472, #1e3a8a);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            color: white;
+        }
+        .stat-sint .val { font-size: 1.8rem; font-weight: 700; }
+        .stat-sint .lbl { font-size: 0.78rem; opacity: .85; text-transform: uppercase; letter-spacing: .5px; }
+
+        /* ── Sub-tabs árbol ── */
+        .subtabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .subtab-btn {
+            padding: 8px 18px; border-radius: 20px; border: 1px solid #e2e8f0;
+            background: white; font-size: 0.85rem; font-weight: 500;
+            color: #64748b; cursor: pointer; transition: all 0.2s;
+            box-shadow: none; transform: none !important;
+        }
+        .subtab-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
+        .subtab-panel { display: none; }
+        .subtab-panel.active { display: block; }
+
+        /* ── Botones de la pestaña sint ── */
+        #sint-analyze-btn { width: 100%; margin-top: 4px; }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Analizador Léxico</h1>
+<div class="container">
+    <h1>Compilador — Lenguaje de Gestión de Proyectos</h1>
 
+    <!-- ══════════ TABS ══════════ -->
+    <div class="tabs-wrapper">
+        <button class="tab-btn active" onclick="cambiarTab('lexico', this)">🔤 Analizador Léxico</button>
+        <button class="tab-btn"        onclick="cambiarTab('sintactico', this)">🌳 Analizador Sintáctico</button>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════
+         PESTAÑA 1 — LÉXICO (sin cambios)
+    ══════════════════════════════════════════════════ -->
+    <div id="tab-lexico" class="tab-panel active">
         <div class="main-content">
-            <!-- Panel izquierdo: Código fuente -->
+
+            <!-- Panel izquierdo -->
             <div class="source-panel">
                 <h2>Código Fuente</h2>
                 <div class="code-editor-wrapper">
-                    <textarea id="codigo" placeholder="Escribe tu código aquí..."></textarea>
+                    <textarea id="codigo-lexico" placeholder="Escribe tu código aquí..."></textarea>
                 </div>
                 <div class="buttons">
-                    <button onclick="seleccionarArchivo()">📁 Seleccionar Archivo</button>
-                    <button onclick="analizar()" class="primary" id="analyze-btn">🔍 Analizar</button>
+                    <button onclick="seleccionarArchivo('lexico')">📁 Seleccionar Archivo</button>
+                    <button onclick="analizarLexico()" class="primary" id="lex-analyze-btn">🔍 Analizar</button>
                 </div>
 
-                <!-- Diccionario / Manual del lenguaje -->
                 <div class="language-manual">
                     <div class="manual-header" onclick="toggleManual()">
                         <h3>📚 Manual del Lenguaje</h3>
                         <span class="toggle-icon" id="manualToggle">▼</span>
                     </div>
                     <div class="manual-content" id="manualContent">
-                        <!-- Palabras Reservadas -->
-                        <div class="token-category" style="border-left-color: #0a2472;">
-                            <div class="category-title">
-                                <span style="color: #0a2472; font-weight: 700;">■</span>
-                                Palabras Reservadas
-                            </div>
+                        <div class="token-category" style="border-left-color:#0a2472">
+                            <div class="category-title"><span style="color:#0a2472;font-weight:700">■</span> Palabras Reservadas</div>
                             <div class="example-description">Comandos principales del lenguaje</div>
                             <div class="token-examples">
-                                <span class="token-example">REG.USR</span>
-                                <span class="token-example">ING.USR</span>
-                                <span class="token-example">SALIR</span>
-                                <span class="token-example">MENU</span>
-                                <span class="token-example">CRE.USR</span>
-                                <span class="token-example">CRE.GRP</span>
-                                <span class="token-example">CRE.TAR</span>
-                                <span class="token-example">DES</span>
-                                <span class="token-example">FEC</span>
+                                <span class="token-example">REG.USR</span><span class="token-example">ING.USR</span>
+                                <span class="token-example">CRE.TAR</span><span class="token-example">CRE.TAR.GRP</span>
+                                <span class="token-example">REC.TAR</span><span class="token-example">FILTRO.TAR</span>
+                                <span class="token-example">NOTIF.CUANDO</span><span class="token-example">IMPORT</span>
+                                <span class="token-example">DES</span><span class="token-example">FEC</span>
                             </div>
                         </div>
-
-                        <!-- Identificadores -->
-                        <div class="token-category" style="border-left-color: #1e3a8a;">
-                            <div class="category-title">
-                                <span style="color: #1e3a8a; font-weight: 700;">■</span>
-                                Identificadores
-                            </div>
-                            <div class="example-description">Nombres de variables, funciones, etc.</div>
+                        <div class="token-category" style="border-left-color:#1e3a8a">
+                            <div class="category-title"><span style="color:#1e3a8a;font-weight:700">■</span> Identificadores</div>
+                            <div class="example-description">Nombres de usuario en minúsculas</div>
                             <div class="token-examples">
-                                <span class="token-example">usuario1</span>
-                                <span class="token-example">nombre_tarea</span>
-                                <span class="token-example">fecha_limite</span>
+                                <span class="token-example">juan</span><span class="token-example">maria</span><span class="token-example">usuario1</span>
                             </div>
                         </div>
-
-                        <!-- Números -->
-                        <div class="token-category" style="border-left-color: #22c55e;">
-                            <div class="category-title">
-                                <span style="color: #22c55e; font-weight: 700;">■</span>
-                                Números
-                            </div>
-                            <div class="example-description">Valores numéricos enteros</div>
+                        <div class="token-category" style="border-left-color:#86efac">
+                            <div class="category-title"><span style="color:#86efac;font-weight:700">■</span> Fechas y Horas</div>
+                            <div class="example-description">Fechas fijas, relativas y horas</div>
                             <div class="token-examples">
-                                <span class="token-example">123</span>
-                                <span class="token-example">456</span>
-                                <span class="token-example">7890</span>
+                                <span class="token-example">2026-12-31</span><span class="token-example">PROX.LUN</span>
+                                <span class="token-example">FIN.MES</span><span class="token-example">HOY + 5 DIAS</span>
+                                <span class="token-example">10:00</span>
                             </div>
                         </div>
-
-                        <!-- Fechas -->
-                        <div class="token-category" style="border-left-color: #86efac;">
-                            <div class="category-title">
-                                <span style="color: #86efac; font-weight: 700;">■</span>
-                                Fechas
-                            </div>
-                            <div class="example-description">Formato AAAA-MM-DD</div>
+                        <div class="token-category" style="border-left-color:#f97316">
+                            <div class="category-title"><span style="color:#f97316;font-weight:700">■</span> Operadores</div>
                             <div class="token-examples">
-                                <span class="token-example">2024-03-18</span>
-                                <span class="token-example">2024-12-31</span>
-                                <span class="token-example">2026-03-01</span>
+                                <span class="token-example">Y</span><span class="token-example">O</span>
+                                <span class="token-example">==</span><span class="token-example">!=</span>
+                                <span class="token-example">&gt;=</span>
                             </div>
                         </div>
-
-                        <!-- Texto -->
-                        <div class="token-category" style="border-left-color: #475569;">
-                            <div class="category-title">
-                                <span style="color: #475569; font-weight: 700;">■</span>
-                                Texto
-                            </div>
-                            <div class="example-description">Cadenas de texto dentro de paréntesis</div>
+                        <div class="token-category" style="border-left-color:#0a2472">
+                            <div class="category-title"><span style="color:#0a2472;font-weight:700">■</span> Estados y Prioridades</div>
                             <div class="token-examples">
-                                <span class="token-example">"descripción"</span>
-                                <span class="token-example">'título'</span>
-                                <span class="token-example">(Modelo ER y normalización)</span>
-                            </div>
-                        </div>
-
-                        <!-- Símbolos y Delimitadores -->
-                        <div class="token-category" style="border-left-color: #f97316;">
-                            <div class="category-title">
-                                <span style="color: #f97316; font-weight: 700;">■</span>
-                                Símbolos y Delimitadores
-                            </div>
-                            <div class="example-description">Signos de puntuación y agrupación</div>
-                            <div class="token-examples">
-                                <span class="token-example">(</span>
-                                <span class="token-example">)</span>
-                                <span class="token-example">,</span>
-                                <span class="token-example">;</span>
-                                <span class="token-example">-</span>
-                            </div>
-                        </div>
-
-                        <!-- Estados y Prioridades -->
-                        <div class="token-category" style="border-left-color: #0a2472;">
-                            <div class="category-title">
-                                <span style="color: #0a2472; font-weight: 700;">■</span>
-                                Estados
-                            </div>
-                            <div class="token-examples">
-                                <span class="token-example">EST.PEN</span>
-                                <span class="token-example">EST.ACT</span>
-                                <span class="token-example">EST.FIN</span>
-                            </div>
-                        </div>
-
-                        <div class="token-category" style="border-left-color: #0a2472;">
-                            <div class="category-title">
-                                <span style="color: #0a2472; font-weight: 700;">■</span>
-                                Prioridades
-                            </div>
-                            <div class="token-examples">
-                                <span class="token-example">PRI.ALT</span>
-                                <span class="token-example">PRI.MED</span>
-                                <span class="token-example">PRI.BAJ</span>
+                                <span class="token-example">EST.PEN</span><span class="token-example">EST.ACT</span>
+                                <span class="token-example">EST.FIN</span><span class="token-example">PRI.ALT</span>
+                                <span class="token-example">PRI.URG</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Panel derecho: Resultados -->
+            <!-- Panel derecho -->
             <div class="results-panel">
                 <h2>Resultados del Análisis</h2>
-
-                <!-- Resumen de estadísticas -->
                 <div class="stats" id="estadisticas">
-                    <div class="stat-item">
-                        <span class="stat-label">Errores</span>
-                        <span class="stat-value" id="errores">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Advertencias</span>
-                        <span class="stat-value" id="advertencias">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Tokens únicos</span>
-                        <span class="stat-value" id="tokens_unicos">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Variables</span>
-                        <span class="stat-value" id="variables">0</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">Funciones</span>
-                        <span class="stat-value" id="funciones">0</span>
-                    </div>
+                    <div class="stat-item"><span class="stat-label">Errores</span><span class="stat-value" id="errores">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Advertencias</span><span class="stat-value" id="advertencias">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Tokens únicos</span><span class="stat-value" id="tokens_unicos">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Variables</span><span class="stat-value" id="variables">0</span></div>
+                    <div class="stat-item"><span class="stat-label">Funciones</span><span class="stat-value" id="funciones">0</span></div>
                 </div>
-
-                <!-- Tabla de tokens con animación -->
                 <h3>Tabla de Tokens</h3>
                 <div class="table-container">
                     <table id="tabla-tokens">
-                        <thead>
-                            <tr>
-                                <th>Token</th>
-                                <th>Tipo</th>
-                            </tr>
-                        </thead>
-                        <tbody id="token-body">
-                            <!-- Los tokens se insertarán aquí -->
-                        </tbody>
+                        <thead><tr><th>Token</th><th>Tipo</th></tr></thead>
+                        <tbody id="token-body"></tbody>
                     </table>
                 </div>
-
-                <!-- Resumen por tipo -->
-                <div class="tipo-resumen" id="resumen-tipos">
-                    <h3>Resumen por tipo</h3>
-                    <!-- Resumen por tipo se mostrará aquí -->
-                </div>
+                <div class="tipo-resumen" id="resumen-tipos"><h3>Resumen por tipo</h3></div>
             </div>
         </div>
     </div>
 
-    <!-- CodeMirror JavaScript -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script>
-        // Inicializar CodeMirror cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar el editor
-            var editor = CodeMirror.fromTextArea(document.getElementById('codigo'), {
-                lineNumbers: true,
-                mode: 'lenguaje-analizador',
-                theme: 'eclipse',
-                indentUnit: 4,
-                smartIndent: true,
-                lineWrapping: true,
-                matchBrackets: true,
-                autoCloseBrackets: true,
-                placeholder: 'Escribe tu código aquí...',
-                extraKeys: {
-                    "Ctrl-Space": "autocomplete"
-                }
-            });
+    <!-- ══════════════════════════════════════════════════
+         PESTAÑA 2 — SINTÁCTICO
+    ══════════════════════════════════════════════════ -->
+    <div id="tab-sintactico" class="tab-panel">
+        <div class="main-content">
 
-            // Guardar el editor en una variable global para usarlo en otras funciones
-            window.codeEditor = editor;
+            <!-- Panel izquierdo -->
+            <div class="source-panel">
+                <h2>Código Fuente</h2>
+                <div class="code-editor-wrapper">
+                    <textarea id="codigo-sintactico" placeholder="Escribe tu código aquí..."></textarea>
+                </div>
+                <div class="buttons">
+                    <button onclick="seleccionarArchivo('sintactico')">📁 Seleccionar Archivo</button>
+                    <button onclick="analizarSintactico()" class="primary" id="sint-analyze-btn">🌳 Analizar</button>
+                </div>
 
-            // Configurar el resaltado personalizado para tu lenguaje
-            CodeMirror.defineMode("lenguaje-analizador", function() {
-                return {
-                    token: function(stream, state) {
-                        // Palabras reservadas (comandos principales)
-                        if (stream.match(/REG\.USR|ING\.USR|SALIR|MENU|CRE\.USR|CRE\.GRP|CRE\.TAR|DES|FEC/)) {
-                            return 'keyword';
-                        }
+                <!-- Gramática del lenguaje -->
+                <div class="language-manual" style="margin-top:20px">
+                    <div class="manual-header" onclick="toggleGramatica()">
+                        <h3>📐 Gramática BNF</h3>
+                        <span class="toggle-icon" id="gramaticaToggle">▼</span>
+                    </div>
+                    <div class="manual-content" id="gramaticaContent">
+                        <div class="token-category" style="border-left-color:#3b82f6">
+                            <div class="category-title" style="color:#1e3a8a">Estructura general</div>
+                            <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1e293b;margin-top:8px;line-height:1.7">programa    → sentencia*
+sentencia   → sent_tarea | sent_usuario | sent_grupo
+            | sent_recurrente | sent_filtro | sent_notif
+            | sent_lista | sent_comentario | sent_mensaje
+            | sent_importar | sent_exportar | sent_biblioteca</pre>
+                        </div>
+                        <div class="token-category" style="border-left-color:#22c55e">
+                            <div class="category-title" style="color:#166534">Modificadores</div>
+                            <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1e293b;margin-top:8px;line-height:1.7">modificador → DES(texto)  | FEC(expr_fecha)
+            | PRI.ALT | PRI.MED | PRI.BAJ | PRI.URG
+            | EST.PEN | EST.ACT | EST.FIN | …
+            | ASIG.USR(texto) | EN.LIS(texto)</pre>
+                        </div>
+                        <div class="token-category" style="border-left-color:#86efac">
+                            <div class="category-title" style="color:#166534">Expresiones de fecha</div>
+                            <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1e293b;margin-top:8px;line-height:1.7">expr_fecha  → FECHA | EXPR_FECHA | HORA
+            | HOY (+ | -) NUMERO UNIDAD
+            | PROX.LUN | FIN.MES | FIN.SEM | …</pre>
+                        </div>
+                        <div class="token-category" style="border-left-color:#f59e0b">
+                            <div class="category-title" style="color:#92400e">Condiciones</div>
+                            <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1e293b;margin-top:8px;line-height:1.7">condicion   → EST.TAR(texto) OP_CMP estado
+            | prioridad | estado | ETIQ(texto)
+cond_comb   → condicion ( (Y|O|NO) condicion )*</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-                        // Estados
-                        if (stream.match(/EST\.PEN|EST\.ACT|EST\.FIN/)) {
-                            return 'keyword';
-                        }
+            <!-- Panel derecho -->
+            <div class="results-panel">
+                <h2>Árbol Sintáctico</h2>
 
-                        // Prioridades
-                        if (stream.match(/PRI\.ALT|PRI\.MED|PRI\.BAJ/)) {
-                            return 'keyword';
-                        }
+                <!-- Banner de resultado -->
+                <div class="resultado-banner idle" id="sint-banner">
+                    ⏳ Esperando código para analizar…
+                </div>
 
-                        // Fechas (formato YYYY-MM-DD)
-                        if (stream.match(/\d{4}-\d{2}-\d{2}/)) {
-                            return 'date';
-                        }
+                <!-- Stats -->
+                <div class="stats-sint" id="sint-stats" style="display:none">
+                    <div class="stat-sint">
+                        <div class="val" id="sint-sentencias">0</div>
+                        <div class="lbl">Sentencias</div>
+                    </div>
+                    <div class="stat-sint">
+                        <div class="val" id="sint-nodos">0</div>
+                        <div class="lbl">Nodos totales</div>
+                    </div>
+                    <div class="stat-sint">
+                        <div class="val" id="sint-prof">0</div>
+                        <div class="lbl">Profundidad</div>
+                    </div>
+                </div>
 
-                        // Números
-                        if (stream.match(/\b\d+\b/)) {
-                            return 'number';
-                        }
+                <!-- Sub-pestañas árbol -->
+                <div class="subtabs" id="sint-subtabs" style="display:none">
+                    <button class="subtab-btn active" onclick="cambiarSubtab('texto', this)">📝 Texto</button>
+                    <button class="subtab-btn"        onclick="cambiarSubtab('visual', this)">🖼 Visual</button>
+                </div>
 
-                        // Texto entre comillas
-                        if (stream.match(/"[^"]*"/) || stream.match(/'[^']*'/)) {
-                            return 'string';
-                        }
+                <div id="subtab-texto" class="subtab-panel active">
+                    <pre class="arbol-texto" id="sint-arbol-texto">-- El árbol aparecerá aquí --</pre>
+                </div>
 
-                        // Texto entre paréntesis (como en DES("..."))
-                        if (stream.match(/\([^)]*\)/)) {
-                            return 'string';
-                        }
+                <div id="subtab-visual" class="subtab-panel">
+                    <div id="arbol-visual-wrap">
+                        <svg id="arbol-svg" width="800" height="400"></svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                        // Identificadores (palabras normales)
-                        if (stream.match(/[a-zA-Z_][a-zA-Z0-9_]*/)) {
-                            return 'identifier';
-                        }
+<!-- CodeMirror -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════
+// TABS
+// ══════════════════════════════════════════════════════
+function cambiarTab(nombre, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + nombre).classList.add('active');
+    btn.classList.add('active');
+    if (nombre === 'sintactico' && window.editorSint) {
+        setTimeout(() => window.editorSint.refresh(), 50);
+    }
+    if (nombre === 'lexico' && window.editorLex) {
+        setTimeout(() => window.editorLex.refresh(), 50);
+    }
+}
 
-                        // Símbolos y delimitadores
-                        if (stream.match(/[\(\){},;]/)) {
-                            return 'symbol';
-                        }
+function cambiarSubtab(nombre, btn) {
+    document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('subtab-' + nombre).classList.add('active');
+}
 
-                        // Operadores
-                        if (stream.match(/[=<>!+\-*/]/)) {
-                            return 'operator';
-                        }
+// ══════════════════════════════════════════════════════
+// CODE MIRROR — modo compartido
+// ══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', function () {
 
-                        // Avanzar un carácter si no hay match
-                        stream.next();
-                        return null;
-                    }
-                };
-            });
+    const KEYWORDS = [
+        'REG\\.USR','ING\\.USR','SALIR','MENU','CRE\\.USR','CRE\\.GRP',
+        'CRE\\.TAR\\.GRP','CRE\\.TAR\\.IND','CRE\\.TAR','VER\\.TAR\\.IND',
+        'ASIG\\.TAR','ASIG\\.USR','VER\\.AVAN','CRE\\.SUBTAR','DIV\\.TAR',
+        'AUTO\\.EVAL','CAL','REC\\.TAR','CADA','HASTA','HOY',
+        'ETIQ\\.TAR','ETIQ','AGREGAR','FILTRO\\.TAR','VISTA','VER\\.VISTA',
+        'NOTIF\\.CUANDO','NOTIF\\.RECORDAR','ENVIAR','SUSCRIBIR','EST\\.TAR','USR','TAR',
+        'IMPORT','EXPORTAR\\.TAR','USAR\\.BIB',
+        'EST\\.PEN','EST\\.ACT','EST\\.REV','EST\\.COR','EST\\.APROB','EST\\.RECH','EST\\.FIN',
+        'PRI\\.URG','PRI\\.ALT','PRI\\.MED','PRI\\.BAJ',
+        'ROL\\.COORD','ROL\\.MIEM',
+        'PROX\\.LUN','PROX\\.MAR','PROX\\.MIE','PROX\\.JUE','PROX\\.VIE','PROX\\.SAB','PROX\\.DOM',
+        'FIN\\.MES','FIN\\.SEM','INI\\.MES','INI\\.SEM',
+        'DIA','DIAS','SEMANA','SEMANAS','MES','MESES','ANNO',
+        'DES','FEC','EN\\.LIS','COM\\.MEJ','COM\\.AVAN','COM\\.ASIG','COM',
+        'CRE\\.LIS','VER\\.LIS','AG\\.LIS','ELIM\\.LIS','LIS\\.TIT','LIS\\.DESC',
+        'ENV\\.MSG','ENV\\.ENL','VER\\.MSG',
+        'Y','O','NO'
+    ];
+    const KW_REGEX = new RegExp('^(' + KEYWORDS.join('|') + ')\\b');
 
-            // Establecer el modo personalizado
-            editor.setOption('mode', 'lenguaje-analizador');
+    CodeMirror.defineMode('lan-mode', function () {
+        return {
+            token: function (stream) {
+                if (stream.match(/\d{4}-\d{2}-\d{2}/))  return 'date';
+                if (stream.match(/\d{1,2}:\d{2}/))       return 'number';
+                if (stream.match(/"[^"]*"/))              return 'string';
+                if (stream.match(/==/))                   return 'operator';
+                if (stream.match(/!=/))                   return 'operator';
+                if (stream.match(/>=/))                   return 'operator';
+                if (stream.match(/<=/))                   return 'operator';
+                if (stream.match(KW_REGEX))               return 'keyword';
+                if (stream.match(/\b\d+\b/))              return 'number';
+                if (stream.match(/[a-z][a-z0-9_]*/))     return 'variable';
+                if (stream.match(/[A-Za-záéíóúÁÉÍÓÚñÑ]+/)) return 'string';
+                if (stream.match(/[();,+\-]/))            return 'bracket';
+                stream.next();
+                return null;
+            }
+        };
+    });
 
-            // Cargar el código de ejemplo
-            editor.setValue(`CRE.TAR(Modelo ER y normalización)
-DES(Diseño del modelo y reglas)
-FEC(2026-03-01)
-PRI.ALT
-EST.PEN;`);
+    const cmOpts = {
+        lineNumbers: true,
+        mode: 'lan-mode',
+        theme: 'eclipse',
+        indentUnit: 4,
+        smartIndent: true,
+        lineWrapping: true,
+        matchBrackets: true,
+    };
 
-            // Expandir manual por defecto
-            setTimeout(() => {
-                toggleManual();
-            }, 500);
+    // ── Editor léxico ──
+    window.editorLex = CodeMirror.fromTextArea(
+        document.getElementById('codigo-lexico'), cmOpts
+    );
+    window.editorLex.setValue(
+`CRE.TAR.GRP(Modelo ER) DES(Diseñar el diagrama) FEC(PROX.LUN) PRI.ALT;
+ASIG.TAR(Modelo ER) ASIG.USR(juan);
+REC.TAR(Revision) CADA(SEMANA) HASTA(2026-12-31);`
+    );
+
+    // ── Editor sintáctico ──
+    window.editorSint = CodeMirror.fromTextArea(
+        document.getElementById('codigo-sintactico'), cmOpts
+    );
+    window.editorSint.setValue(
+`IMPORT("proyecto_base.lan");
+CRE.TAR.GRP(Modelo ER) DES(Diseñar el diagrama entidad-relación) FEC(PROX.LUN) PRI.ALT;
+ETIQ.TAR(Modelo ER) AGREGAR("urgente", "diseno");
+ASIG.TAR(Modelo ER) ASIG.USR(juan);
+REC.TAR(Revision semanal) CADA(SEMANA) HASTA(2026-12-31);
+NOTIF.CUANDO(EST.TAR(Modelo ER) == EST.ACT) ENVIAR(juan);
+FILTRO.TAR(PRI.ALT Y EST.PEN) VISTA("criticas");
+VER.VISTA("criticas");
+EXPORTAR.TAR("Modelo ER") A("modulo_diseno.lan");`
+    );
+
+    setTimeout(() => toggleManual(), 500);
+});
+
+// ══════════════════════════════════════════════════════
+// LÉXICO
+// ══════════════════════════════════════════════════════
+async function analizarLexico() {
+    const btn = document.getElementById('lex-analyze-btn');
+    btn.classList.add('analyzing-token');
+    try {
+        const res  = await fetch('/analizar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codigo: window.editorLex.getValue() })
         });
+        const data = await res.json();
+        setTimeout(() => {
+            mostrarResultadosLexico(data);
+            btn.classList.remove('analyzing-token');
+        }, 300);
+    } catch (e) {
+        console.error(e);
+        btn.classList.remove('analyzing-token');
+    }
+}
 
-        let analyzing = false;
+function mostrarResultadosLexico(data) {
+    document.getElementById('errores').textContent       = data.estadisticas.errores;
+    document.getElementById('advertencias').textContent  = data.estadisticas.advertencias;
+    document.getElementById('tokens_unicos').textContent = data.estadisticas.tokens_unicos;
+    document.getElementById('variables').textContent     = data.estadisticas.variables;
+    document.getElementById('funciones').textContent     = data.estadisticas.funciones;
 
-        async function analizar() {
-            const codigo = window.codeEditor.getValue(); // Obtener código del editor
-            const analyzeBtn = document.getElementById('analyze-btn');
+    const tbody = document.getElementById('token-body');
+    tbody.innerHTML = '';
+    data.tokens.forEach((token, i) => {
+        setTimeout(() => {
+            const row  = tbody.insertRow();
+            row.style.opacity = '0';
+            row.style.transform = 'translateY(8px)';
+            const cls  = 'token-' + token.tipo.toLowerCase().replace(/_/g, '-');
+            row.insertCell(0).innerHTML = `<span class="${cls}" style="color:${token.color}">${token.lexema}</span>`;
+            row.insertCell(1).innerHTML = `<span class="${cls}">${token.tipo}</span>`;
+            setTimeout(() => {
+                row.style.transition = 'all 0.25s ease';
+                row.style.opacity    = '1';
+                row.style.transform  = 'translateY(0)';
+            }, 40);
+        }, i * 60);
+    });
 
-            analyzeBtn.classList.add('analyzing-token');
-            analyzing = true;
+    const resumen = document.getElementById('resumen-tipos');
+    resumen.innerHTML = '<h3>Resumen por tipo</h3>';
+    Object.entries(data.estadisticas.conteo_tipos).forEach(([tipo, cnt]) => {
+        const cls = 'token-' + tipo.toLowerCase().replace(/_/g, '-');
+        resumen.innerHTML += `<div class="${cls}">${tipo}: ${cnt}</div>`;
+    });
+}
 
-            try {
-                const response = await fetch('/analizar', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({codigo: codigo})
-                });
+// ══════════════════════════════════════════════════════
+// SINTÁCTICO
+// ══════════════════════════════════════════════════════
+async function analizarSintactico() {
+    const btn = document.getElementById('sint-analyze-btn');
+    btn.textContent = '⏳ Analizando…';
+    btn.disabled = true;
+    try {
+        const res  = await fetch('/analizar-sintactico', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codigo: window.editorSint.getValue() })
+        });
+        const data = await res.json();
+        mostrarResultadosSintactico(data);
+    } catch (e) {
+        console.error(e);
+        setBanner('err', '❌ Error de conexión con el servidor');
+    } finally {
+        btn.textContent = '🌳 Analizar';
+        btn.disabled = false;
+    }
+}
 
-                const data = await response.json();
+function setBanner(tipo, texto) {
+    const b = document.getElementById('sint-banner');
+    b.className = 'resultado-banner ' + tipo;
+    b.textContent = texto;
+}
 
-                setTimeout(() => {
-                    mostrarResultados(data);
-                    analyzeBtn.classList.remove('analyzing-token');
-                    analyzing = false;
-                }, 500);
+function mostrarResultadosSintactico(data) {
+    if (data.exito) {
+        setBanner('ok', '✅ Cadena aceptada — Programa sintácticamente correcto');
 
-            } catch (error) {
-                console.error('Error:', error);
-                analyzeBtn.classList.remove('analyzing-token');
-                analyzing = false;
-            }
-        }
+        // Stats
+        const st = data.estadisticas;
+        document.getElementById('sint-stats').style.display = 'grid';
+        document.getElementById('sint-sentencias').textContent = st.sentencias;
+        document.getElementById('sint-nodos').textContent      = st.nodos_totales;
+        document.getElementById('sint-prof').textContent       = st.profundidad;
 
-        function mostrarResultados(data) {
-            // Actualizar estadísticas
-            document.getElementById('errores').textContent = data.estadisticas.errores;
-            document.getElementById('advertencias').textContent = data.estadisticas.advertencias;
-            document.getElementById('tokens_unicos').textContent = data.estadisticas.tokens_unicos;
-            document.getElementById('variables').textContent = data.estadisticas.variables;
-            document.getElementById('funciones').textContent = data.estadisticas.funciones;
+        // Texto árbol
+        document.getElementById('sint-arbol-texto').textContent =
+            'PROGRAMA\n' + data.texto_arbol.replace(/^PROGRAMA\n/, '');
 
-            // Mostrar tabla de tokens con animación
-            const tbody = document.getElementById('token-body');
-            tbody.innerHTML = '';
+        // Subtabs visibles
+        document.getElementById('sint-subtabs').style.display = 'flex';
 
-            data.tokens.forEach((token, index) => {
-                setTimeout(() => {
-                    const row = tbody.insertRow();
-                    row.style.opacity = '0';
-                    row.style.transform = 'translateY(10px)';
+        // Árbol visual
+        if (data.arbol_json) dibujarArbol(data.arbol_json);
 
-                    const cellToken = row.insertCell(0);
-                    const cellTipo = row.insertCell(1);
+    } else {
+        setBanner('err', '❌ Error sintáctico: ' + data.mensaje);
+        document.getElementById('sint-stats').style.display    = 'none';
+        document.getElementById('sint-subtabs').style.display  = 'none';
+        document.getElementById('sint-arbol-texto').textContent =
+            '-- Error sintáctico --\n\n' + data.mensaje;
+    }
+}
 
-                    // Aplicar clase según tipo para colores consistentes
-                    const tipoClass = 'token-' + token.tipo.toLowerCase().replace('_', '-');
+// ══════════════════════════════════════════════════════
+// ÁRBOL VISUAL SVG
+// ══════════════════════════════════════════════════════
 
-                    cellToken.innerHTML = `<span class="${tipoClass}" style="color: ${token.color}">${token.lexema}</span>`;
-                    cellTipo.innerHTML = `<span class="${tipoClass}">${token.tipo}</span>`;
+const COLORES_NODO = {
+    PROGRAMA:             ['#0a2472', '#ffffff'],
+    SENT_CREAR_TAREA:     ['#1e3a8a', '#ffffff'],
+    SENT_TAREA_RECURRENTE:['#1e3a8a', '#ffffff'],
+    SENT_FILTRO:          ['#1e3a8a', '#ffffff'],
+    SENT_NOTIF_CUANDO:    ['#1e3a8a', '#ffffff'],
+    SENT_NOTIF_RECORDAR:  ['#1e3a8a', '#ffffff'],
+    SENT_IMPORTAR:        ['#6d28d9', '#ffffff'],
+    SENT_EXPORTAR:        ['#6d28d9', '#ffffff'],
+    SENT_ETIQUETAR:       ['#0e7490', '#ffffff'],
+    SENT_VER_VISTA:       ['#0e7490', '#ffffff'],
+    SENT_ASIGNAR_TAREA:   ['#1e3a8a', '#ffffff'],
+    FRECUENCIA:           ['#065f46', '#ffffff'],
+    LIMITE:               ['#065f46', '#ffffff'],
+    CONDICION_COMBINADA:  ['#92400e', '#ffffff'],
+    CONDICION:            ['#b45309', '#ffffff'],
+    EXPR_FECHA:           ['#166534', '#ffffff'],
+    FECHA_MOD:            ['#166534', '#ffffff'],
+    DESCRIPCION:          ['#374151', '#ffffff'],
+    PRIORIDAD:            ['#9a3412', '#ffffff'],
+    ESTADO:               ['#1e40af', '#ffffff'],
+    AGREGAR:              ['#0e7490', '#ffffff'],
+    VISTA:                ['#0e7490', '#ffffff'],
+    ENVIAR:               ['#4c1d95', '#ffffff'],
+};
 
-                    setTimeout(() => {
-                        row.style.transition = 'all 0.3s ease';
-                        row.style.opacity = '1';
-                        row.style.transform = 'translateY(0)';
-                    }, 50);
-                }, index * 100);
-            });
+function colorNodo(nombre) {
+    if (COLORES_NODO[nombre]) return COLORES_NODO[nombre];
+    // Hojas (lexemas literales)
+    if (/^[A-Z.]+$/.test(nombre) || nombre.startsWith('"') || /^\d/.test(nombre)) {
+        return ['#f1f5f9', '#0a2472'];
+    }
+    return ['#dbeafe', '#1e3a8a'];
+}
 
-            // Mostrar resumen por tipo
-            const resumen = document.getElementById('resumen-tipos');
-            resumen.innerHTML = '<h3>Resumen por tipo</h3>';
+function medirTexto(t) { return Math.max(t.length * 7.2 + 20, 60); }
 
-            Object.entries(data.estadisticas.conteo_tipos).forEach(([tipo, cantidad]) => {
-                const tipoClass = 'token-' + tipo.toLowerCase().replace('_', '-');
-                resumen.innerHTML += `<div class="${tipoClass}">${tipo}: ${cantidad}</div>`;
-            });
-        }
+function calcLayout(nodo, profundidad = 0) {
+    const W  = medirTexto(nodo.nombre);
+    const H  = 28;
+    const PX = 12;   // padding horizontal entre hermanos
+    const PY = 54;   // padding vertical entre niveles
 
-        function seleccionarArchivo() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.txt';
-            input.onchange = function(e) {
-                const file = e.target.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    window.codeEditor.setValue(e.target.result);
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        }
+    if (!nodo.hijos || nodo.hijos.length === 0) {
+        nodo._w = W; nodo._h = H; nodo._depth = profundidad;
+        return { w: W, h: H };
+    }
 
-        function toggleManual() {
-            const content = document.getElementById('manualContent');
-            const toggle = document.getElementById('manualToggle');
+    let totalW = 0, maxH = H;
+    nodo.hijos.forEach(h => {
+        const r = calcLayout(h, profundidad + 1);
+        totalW += r.w + PX;
+        maxH = Math.max(maxH, r.h);
+    });
+    totalW -= PX;
 
-            if (content.classList.contains('expanded')) {
-                content.classList.remove('expanded');
-                toggle.textContent = '▼';
-            } else {
-                content.classList.add('expanded');
-                toggle.textContent = '▲';
-            }
-        }
-    </script>
+    nodo._w = Math.max(W, totalW);
+    nodo._h = H + PY + maxH;
+    nodo._depth = profundidad;
+    return { w: nodo._w, h: nodo._h };
+}
+
+function posicionarNodos(nodo, x, y) {
+    const H = 28, PX = 12, PY = 54;
+    nodo._x = x + nodo._w / 2;
+    nodo._y = y;
+
+    if (!nodo.hijos || nodo.hijos.length === 0) return;
+
+    const anchoHijos = nodo.hijos.reduce((s, h) => s + h._w + PX, -PX);
+    let cx = x + (nodo._w - anchoHijos) / 2;
+
+    nodo.hijos.forEach(h => {
+        posicionarNodos(h, cx, y + H + PY);
+        cx += h._w + PX;
+    });
+}
+
+function renderNodo(svg, nodo) {
+    const H  = 28;
+    const W  = medirTexto(nodo.nombre);
+    const x  = nodo._x - W / 2;
+    const [bg, fg] = colorNodo(nodo.nombre);
+
+    // Líneas a hijos
+    if (nodo.hijos) {
+        nodo.hijos.forEach(h => {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', nodo._x);
+            line.setAttribute('y1', nodo._y + H);
+            line.setAttribute('x2', h._x);
+            line.setAttribute('y2', h._y);
+            line.setAttribute('stroke', '#cbd5e1');
+            line.setAttribute('stroke-width', '1.5');
+            svg.appendChild(line);
+            renderNodo(svg, h);
+        });
+    }
+
+    // Rectángulo
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    rect.setAttribute('x', x);
+    rect.setAttribute('y', nodo._y);
+    rect.setAttribute('width', W);
+    rect.setAttribute('height', H);
+    rect.setAttribute('rx', 7);
+    rect.setAttribute('ry', 7);
+    rect.setAttribute('fill', bg);
+    rect.setAttribute('stroke', '#93c5fd');
+    rect.setAttribute('stroke-width', '1');
+    svg.appendChild(rect);
+
+    // Texto
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', nodo._x);
+    text.setAttribute('y', nodo._y + H / 2 + 4);
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('fill', fg);
+    text.setAttribute('font-family', "'JetBrains Mono', monospace");
+    text.setAttribute('font-size', '11');
+    text.setAttribute('font-weight', '500');
+    text.textContent = nodo.nombre.length > 22
+        ? nodo.nombre.slice(0, 20) + '…'
+        : nodo.nombre;
+    svg.appendChild(text);
+}
+
+function dibujarArbol(datos) {
+    const svg = document.getElementById('arbol-svg');
+    svg.innerHTML = '';
+
+    calcLayout(datos);
+    posicionarNodos(datos, 10, 10);
+
+    const totalW = datos._w + 20;
+    const totalH = datos._h + 30;
+    svg.setAttribute('width',  totalW);
+    svg.setAttribute('height', totalH);
+    document.getElementById('arbol-visual-wrap').style.maxHeight = '520px';
+
+    renderNodo(svg, datos);
+}
+
+// ══════════════════════════════════════════════════════
+// UTILIDADES COMPARTIDAS
+// ══════════════════════════════════════════════════════
+function seleccionarArchivo(editor) {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.txt,.lan';
+    input.onchange = e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            if (editor === 'lexico')    window.editorLex.setValue(ev.target.result);
+            if (editor === 'sintactico') window.editorSint.setValue(ev.target.result);
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+    input.click();
+}
+
+function toggleManual() {
+    const c = document.getElementById('manualContent');
+    const t = document.getElementById('manualToggle');
+    c.classList.toggle('expanded');
+    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
+}
+
+function toggleGramatica() {
+    const c = document.getElementById('gramaticaContent');
+    const t = document.getElementById('gramaticaToggle');
+    c.classList.toggle('expanded');
+    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
+}
+</script>
 </body>
 </html>
