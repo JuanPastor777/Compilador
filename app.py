@@ -15,7 +15,7 @@ def index():
     return render_template('index.html')
 
 
-# ── Analizador Léxico ─────────────────────────────────────────
+
 
 @app.route('/analizar', methods=['POST'])
 def analizar():
@@ -50,7 +50,7 @@ def analizar():
     })
 
 
-# ── Analizador Sintáctico ─────────────────────────────────────
+
 
 @app.route('/analizar-sintactico', methods=['POST'])
 def analizar_sintactico():

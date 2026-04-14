@@ -6,14 +6,12 @@ Descendente recursivo con construcción de árbol sintáctico.
 from Lexico import AnalizadorLexico
 
 
-# ─────────────────────────────────────────────────────────────
-# NODO DEL ÁRBOL SINTÁCTICO
-# ─────────────────────────────────────────────────────────────
+
 
 class Nodo:
     def __init__(self, etiqueta, valor=None):
-        self.etiqueta = etiqueta   # Nombre del nodo (ej. PROGRAMA, SENTENCIA, FEC…)
-        self.valor = valor         # Lexema literal si es hoja (ej. "juan", "2026-12-31")
+        self.etiqueta = etiqueta   # Nombre del nodo ( PROGRAMA, SENTENCIA, FEC…)
+        self.valor = valor         # Lexema literal si es hoja ("juan", "2026-12-31")
         self.hijos = []
 
     def agregar(self, hijo):
@@ -21,18 +19,18 @@ class Nodo:
         return hijo
 
     def hoja(self, lexema):
-        """Agrega un hijo hoja con el lexema literal."""
+
         n = Nodo(lexema)
         self.hijos.append(n)
         return n
 
     def a_dict(self):
-        """Serializa el nodo para enviarlo al frontend como JSON."""
+
         d = {"nombre": self.etiqueta, "hijos": [h.a_dict() for h in self.hijos]}
         return d
 
     def imprimir(self, prefijo="", es_ultimo=True):
-        """Imprime el árbol en consola con formato tipo árbol (├── └──)."""
+
         conector = "└── " if es_ultimo else "├── "
         print(prefijo + conector + self.etiqueta)
         extension = "    " if es_ultimo else "│   "
@@ -40,7 +38,7 @@ class Nodo:
             hijo.imprimir(prefijo + extension, i == len(self.hijos) - 1)
 
     def a_texto(self, prefijo="", es_ultimo=True):
-        """Devuelve el árbol como string con formato tipo árbol."""
+
         conector = "└── " if es_ultimo else "├── "
         linea = prefijo + conector + self.etiqueta + "\n"
         extension = "    " if es_ultimo else "│   "
@@ -49,14 +47,12 @@ class Nodo:
         return linea
 
 
-# ─────────────────────────────────────────────────────────────
-# ERROR SINTÁCTICO
-# ─────────────────────────────────────────────────────────────
 
 class ErrorSintactico(Exception):
-    def __init__(self, mensaje):
+    def __init__(self, mensaje, linea=0):
         super().__init__(mensaje)
-        self.mensaje = mensaje
+        self.linea = linea
+        self.mensaje = f"Línea {linea}: {mensaje}" if linea else mensaje
 
 
 # ─────────────────────────────────────────────────────────────
@@ -89,15 +85,16 @@ class AnalizadorSintactico:
         return tok
 
     def consumir(self, lexema_esperado=None, tipo_esperado=None):
-        """Consume el token actual si coincide; lanza error si no."""
+        ##Consume el token actual si coincide; lanza error si no
         lex, tip = self.token_actual()
+        linea = self.linea_actual()
         if lexema_esperado and lex != lexema_esperado:
             raise ErrorSintactico(
-                f"Se esperaba '{lexema_esperado}' pero se encontró '{lex}'"
+                f"Se esperaba '{lexema_esperado}' pero se encontró '{lex}'", linea
             )
         if tipo_esperado and tip != tipo_esperado:
             raise ErrorSintactico(
-                f"Se esperaba tipo {tipo_esperado} pero se encontró '{lex}' ({tip})"
+                f"Se esperaba tipo {tipo_esperado} pero se encontró '{lex}' ({tip})", linea
             )
         self.pos += 1
         return lex
@@ -105,13 +102,28 @@ class AnalizadorSintactico:
     def es_fin(self):
         return self.pos >= len(self.tokens)
 
+    def linea_actual(self):
+        if hasattr(self, 'lineas') and self.pos < len(self.lineas):
+            return self.lineas[self.pos]
+        return 0
+
     # ── Punto de entrada ──────────────────────────────────────
 
     def analizar(self, texto):
-        """
-        Analiza el texto fuente y devuelve (arbol, texto_arbol, exito, mensaje).
-        """
-        self.tokens = self.lexico.analizar(texto)
+
+        ##Analiza el texto fuente y devuelve (arbol, texto_arbol, exito, mensaje).
+
+        tokens_raw = self.lexico.analizar(texto)
+        self.tokens = tokens_raw
+        # Asignar número de línea a cada token
+        self.lineas = []
+        for n_linea, linea in enumerate(texto.splitlines(), 1):
+            toks_linea = self.lexico.analizar(linea)
+            for _ in toks_linea:
+                self.lineas.append(n_linea)
+        # Si el conteo no coincide, rellenar con 0
+        while len(self.lineas) < len(self.tokens):
+            self.lineas.append(0)
         # Filtrar errores léxicos antes de comenzar
         errores_lexicos = [(lex, tip) for lex, tip in self.tokens
                            if tip in ("ERROR_LEXICO", "ERR_INV_DATE", "ERR_INV_TIME")]
@@ -124,19 +136,19 @@ class AnalizadorSintactico:
             arbol = self.programa()
             if not self.es_fin():
                 lex, tip = self.token_actual()
-                raise ErrorSintactico(f"Token inesperado al final: '{lex}'")
+                raise ErrorSintactico(f"Token inesperado al final: '{lex}'", self.linea_actual())
             texto_arbol = "PROGRAMA\n" + "".join(
                 hijo.a_texto("", i == len(arbol.hijos) - 1)
                 for i, hijo in enumerate(arbol.hijos)
             )
-            print("\n✅ Cadena aceptada\n")
+            print("\n Cadena aceptada\n")
             print("Árbol sintáctico:\n")
             print("PROGRAMA")
             for i, hijo in enumerate(arbol.hijos):
                 hijo.imprimir("", i == len(arbol.hijos) - 1)
             return arbol, texto_arbol, True, "Cadena aceptada"
         except ErrorSintactico as e:
-            print(f"\n❌ {e.mensaje}\n")
+            print(f"\n {e.mensaje}\n")
             return None, "", False, e.mensaje
 
     # ═══════════════════════════════════════════════════════════
@@ -167,7 +179,7 @@ class AnalizadorSintactico:
             nodo.agregar(self.sentencia())
         return nodo
 
-    # ── Despachador de sentencias ─────────────────────────────
+
 
     DISPATCH = {
         # Usuarios
@@ -229,9 +241,9 @@ class AnalizadorSintactico:
             return getattr(self, metodo)()
         raise ErrorSintactico(
             f"Instrucción no reconocida: '{lex}'"
-        )
+        , self.linea_actual())
 
-    # ── Helpers de estructura ─────────────────────────────────
+
 
     def abrir(self, nodo):
         nodo.hoja(self.consumir("("))
@@ -246,17 +258,23 @@ class AnalizadorSintactico:
         nodo.hoja(self.consumir(","))
 
     def arg_texto_o_cadena(self, nodo_padre, etiqueta="ARG"):
-        """Consume TEXTO o CADENA y lo agrega al nodo."""
-        tip = self.tipo()
-        if tip in ("TEXTO", "CADENA", "IDENTIFICADOR"):
-            n = Nodo(etiqueta)
-            n.hoja(self.avanzar()[0])
-            nodo_padre.agregar(n)
-            return n
-        raise ErrorSintactico(
-            f"Se esperaba nombre o cadena pero se encontró '{self.lexema()}'"
-        )
+        """Acumula todos los tokens hasta ) o , como un argumento."""
+        STOP = {")", ",", ";", "EOF"}
+        linea = self.linea_actual()
 
+        if self.lexema() in STOP:
+            raise ErrorSintactico(
+                f"Se esperaba un argumento pero se encontró '{self.lexema()}'", linea
+            )
+
+        partes = []
+        while not self.es_fin() and self.lexema() not in STOP:
+            partes.append(self.avanzar()[0])
+
+        n = Nodo(etiqueta)
+        n.hoja(" ".join(partes))
+        nodo_padre.agregar(n)
+        return n
     def bloque_par(self, nodo_padre, etiqueta, fn_interior):
         """Genera:  etiqueta ( <fn_interior> )  como hijo del nodo_padre."""
         n = Nodo(etiqueta)
@@ -266,7 +284,7 @@ class AnalizadorSintactico:
         self.cerrar(n)
         return n
 
-    # ── Modificadores comunes ─────────────────────────────────
+
 
     MODIFICADORES_PRIORIDAD = {"PRI.URG", "PRI.ALT", "PRI.MED", "PRI.BAJ"}
     MODIFICADORES_ESTADO    = {"EST.PEN", "EST.ACT", "EST.REV",
@@ -277,7 +295,7 @@ class AnalizadorSintactico:
     UNIDADES_TIEMPO         = {"DIA", "DIAS", "SEMANA", "SEMANAS", "MES", "MESES", "ANNO"}
 
     def modificadores(self, nodo):
-        """Consume todos los modificadores opcionales de una sentencia."""
+
         while not self.es_fin() and self.lexema() != ";":
             lex = self.lexema()
             if lex == "DES":
@@ -365,24 +383,24 @@ class AnalizadorSintactico:
 
         if tip in ("FECHA", "EXPR_FECHA", "HORA"):
             ef.hoja(self.avanzar()[0])
-        elif lex in self.KEYWORDS_FECHA:
-            ef.hoja(self.avanzar()[0])
         elif lex == "HOY":
             ef.hoja(self.avanzar()[0])          # HOY
             if self.lexema() in ("+", "-"):
                 ef.hoja(self.avanzar()[0])      # + ó -
                 if self.tipo() != "NUMERO":
-                    raise ErrorSintactico("Se esperaba un número después de HOY +/-")
+                    raise ErrorSintactico("Se esperaba un número después de HOY +/-", self.linea_actual())
                 ef.hoja(self.avanzar()[0])      # N
                 if self.lexema() not in self.UNIDADES_TIEMPO:
                     raise ErrorSintactico(
                         f"Se esperaba unidad de tiempo (DIA, SEMANA…) pero se encontró '{self.lexema()}'"
-                    )
+                    , self.linea_actual())
                 ef.hoja(self.avanzar()[0])      # DIAS / SEMANAS / …
+        elif lex in self.KEYWORDS_FECHA:
+            ef.hoja(self.avanzar()[0])
         else:
             raise ErrorSintactico(
                 f"Se esperaba una expresión de fecha pero se encontró '{lex}'"
-            )
+            , self.linea_actual())
         return ef
 
     # ── Condiciones para FILTRO / NOTIF ───────────────────────
@@ -404,12 +422,12 @@ class AnalizadorSintactico:
             if self.tipo() != "OPERADOR_COMPARACION":
                 raise ErrorSintactico(
                     f"Se esperaba operador de comparación pero se encontró '{self.lexema()}'"
-                )
+                , self.linea_actual())
             c.hoja(self.avanzar()[0])           # == / != / …
             if self.lexema() not in self.MODIFICADORES_ESTADO:
                 raise ErrorSintactico(
                     f"Se esperaba un estado (EST.PEN, EST.ACT…) pero se encontró '{self.lexema()}'"
-                )
+                , self.linea_actual())
             c.hoja(self.avanzar()[0])           # EST.xxx
         elif lex in self.MODIFICADORES_PRIORIDAD:
             c.hoja(self.avanzar()[0])
@@ -423,7 +441,7 @@ class AnalizadorSintactico:
         else:
             raise ErrorSintactico(
                 f"Se esperaba una condición válida pero se encontró '{lex}'"
-            )
+            , self.linea_actual())
         return c
 
     def condicion_combinada(self, nodo):
@@ -455,7 +473,7 @@ class AnalizadorSintactico:
             self.coma(s)
             rol = self.lexema()
             if rol not in ("ROL.COORD", "ROL.MIEM"):
-                raise ErrorSintactico(f"Se esperaba ROL.COORD o ROL.MIEM pero se encontró '{rol}'")
+                raise ErrorSintactico(f"Se esperaba ROL.COORD o ROL.MIEM pero se encontró '{rol}'", self.linea_actual())
             s.hoja(self.avanzar()[0])
         self.cerrar(s)
         self.punto_coma(s)
@@ -605,7 +623,7 @@ class AnalizadorSintactico:
         self.arg_texto_o_cadena(s, "NOMBRE_TAREA")
         self.coma(s)
         if self.tipo() != "NUMERO":
-            raise ErrorSintactico(f"Se esperaba una calificación numérica pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba una calificación numérica pero se encontró '{self.lexema()}'", self.linea_actual())
         s.hoja(self.avanzar()[0])
         self.cerrar(s)
         self.punto_coma(s)
@@ -622,13 +640,13 @@ class AnalizadorSintactico:
         self.cerrar(s)
 
         if self.lexema() != "CADA":
-            raise ErrorSintactico(f"Se esperaba CADA después de REC.TAR(...) pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba CADA después de REC.TAR(...) pero se encontró '{self.lexema()}'", self.linea_actual())
         c = Nodo("FRECUENCIA")
         s.agregar(c)
         c.hoja(self.consumir("CADA"))
         self.abrir(c)
         if self.lexema() not in self.UNIDADES_TIEMPO:
-            raise ErrorSintactico(f"Se esperaba unidad de tiempo (DIA, SEMANA, MES…) pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba unidad de tiempo (DIA, SEMANA, MES…) pero se encontró '{self.lexema()}'", self.linea_actual())
         c.hoja(self.avanzar()[0])
         self.cerrar(c)
 
@@ -646,7 +664,7 @@ class AnalizadorSintactico:
             hora_n.hoja(self.consumir("A"))
             self.abrir(hora_n)
             if self.tipo() != "HORA":
-                raise ErrorSintactico(f"Se esperaba una hora (HH:MM) pero se encontró '{self.lexema()}'")
+                raise ErrorSintactico(f"Se esperaba una hora (HH:MM) pero se encontró '{self.lexema()}'", self.linea_actual())
             hora_n.hoja(self.avanzar()[0])
             self.cerrar(hora_n)
 
@@ -664,7 +682,7 @@ class AnalizadorSintactico:
         self.cerrar(s)
 
         if self.lexema() != "AGREGAR":
-            raise ErrorSintactico(f"Se esperaba AGREGAR pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba AGREGAR pero se encontró '{self.lexema()}'", self.linea_actual())
         a = Nodo("AGREGAR")
         s.agregar(a)
         a.hoja(self.consumir("AGREGAR"))
@@ -686,7 +704,7 @@ class AnalizadorSintactico:
         self.cerrar(s)
 
         if self.lexema() != "VISTA":
-            raise ErrorSintactico(f"Se esperaba VISTA después del filtro pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba VISTA después del filtro pero se encontró '{self.lexema()}'", self.linea_actual())
         v = Nodo("VISTA")
         s.agregar(v)
         v.hoja(self.consumir("VISTA"))
@@ -717,7 +735,7 @@ class AnalizadorSintactico:
         self.cerrar(s)
 
         if self.lexema() != "ENVIAR":
-            raise ErrorSintactico(f"Se esperaba ENVIAR pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba ENVIAR pero se encontró '{self.lexema()}'", self.linea_actual())
         e = Nodo("ENVIAR")
         s.agregar(e)
         e.hoja(self.consumir("ENVIAR"))
@@ -887,7 +905,7 @@ class AnalizadorSintactico:
         self.arg_texto_o_cadena(s, "NOMBRE_TAREA")
         self.cerrar(s)
         if self.lexema() != "A":
-            raise ErrorSintactico(f"Se esperaba A después de EXPORTAR.TAR(...) pero se encontró '{self.lexema()}'")
+            raise ErrorSintactico(f"Se esperaba A después de EXPORTAR.TAR(...) pero se encontró '{self.lexema()}'", self.linea_actual())
         d = Nodo("DESTINO")
         s.agregar(d)
         d.hoja(self.consumir("A"))
