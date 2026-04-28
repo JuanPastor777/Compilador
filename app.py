@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from Lexico import AnalizadorLexico
 from Sintactico import AnalizadorSintactico
+from semantico import AnalizadorSemantico
 import json
 
 app = Flask(__name__)
@@ -13,8 +14,6 @@ with open('tokens.json', 'r', encoding='utf-8') as f:
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
 
 
 @app.route('/analizar', methods=['POST'])
@@ -50,8 +49,6 @@ def analizar():
     })
 
 
-
-
 @app.route('/analizar-sintactico', methods=['POST'])
 def analizar_sintactico():
     codigo = request.json.get('codigo', '')
@@ -75,6 +72,52 @@ def analizar_sintactico():
     return jsonify(respuesta)
 
 
+@app.route('/analizar-semantico', methods=['POST'])
+def analizar_semantico():
+    codigo = request.json.get('codigo', '')
+    sem = AnalizadorSemantico()
+
+    tabla_simbolos, log_pasos, exito, mensaje, detalle_error = sem.analizar(codigo)
+
+    tabla_json = []
+    for entrada in tabla_simbolos.a_lista():
+        entrada_serializable = {}
+        for k, v in entrada.items():
+            if isinstance(v, list):
+                entrada_serializable[k] = v
+            else:
+                entrada_serializable[k] = str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+        tabla_json.append(entrada_serializable)
+
+    log_json = [
+        {
+            'paso': paso['paso'],
+            'accion': paso['accion'],
+            'detalle': paso['detalle'],
+            'linea': paso.get('linea', 0)
+        }
+        for paso in log_pasos
+    ]
+
+    respuesta = {
+        'exito': exito,
+        'mensaje': mensaje,
+        'detalle_error': detalle_error,
+        'tabla_simbolos': tabla_json,
+        'log_pasos': log_json,
+    }
+
+    if exito:
+        respuesta['estadisticas'] = {
+            'total_usuarios': len([e for e in tabla_json if e['categoria'] == 'USUARIO']),
+            'total_grupos': len([e for e in tabla_json if e['categoria'] == 'GRUPO']),
+            'total_tareas': len([e for e in tabla_json if e['categoria'] == 'TAREA']),
+            'total_listas': len([e for e in tabla_json if e['categoria'] == 'LISTA']),
+        }
+
+    return jsonify(respuesta)
+
+
 def contar_nodos(nodo):
     return 1 + sum(contar_nodos(h) for h in nodo.hijos)
 
@@ -85,26 +128,24 @@ def calcular_profundidad(nodo):
     return 1 + max(calcular_profundidad(h) for h in nodo.hijos)
 
 
-# ── Colores Léxico ────────────────────────────────────────────
-
 def obtener_color_lexico(tipo):
     colores = {
         'PALABRA_RESERVADA': '#0a2472',
-        'IDENTIFICADOR':     '#1e3a8a',
-        'DELIMITADOR':       '#3b82f6',
-        'NUMERO':            '#22c55e',
-        'FECHA':             '#86efac',
-        'EXPR_FECHA':        '#4ade80',
-        'HORA':              '#a3e635',
-        'CADENA':            '#e879f9',
-        'OPERADOR_LOGICO':   '#f59e0b',
+        'IDENTIFICADOR': '#1e3a8a',
+        'DELIMITADOR': '#3b82f6',
+        'NUMERO': '#22c55e',
+        'FECHA': '#86efac',
+        'EXPR_FECHA': '#4ade80',
+        'HORA': '#a3e635',
+        'CADENA': '#e879f9',
+        'OPERADOR_LOGICO': '#f59e0b',
         'OPERADOR_COMPARACION': '#fb923c',
-        'OPERADOR':          '#f97316',
-        'TEXTO':             '#475569',
-        'SIMBOLO':           '#f97316',
-        'ERROR_LEXICO':      '#ef4444',
-        'ERR_INV_DATE':      '#ef4444',
-        'ERR_INV_TIME':      '#ef4444',
+        'OPERADOR': '#f97316',
+        'TEXTO': '#475569',
+        'SIMBOLO': '#f97316',
+        'ERROR_LEXICO': '#ef4444',
+        'ERR_INV_DATE': '#ef4444',
+        'ERR_INV_TIME': '#ef4444',
     }
     return colores.get(tipo, '#64748b')
 

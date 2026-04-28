@@ -13,17 +13,15 @@
 <div class="container">
     <h1>Compilador — Lenguaje de Gestión de Proyectos</h1>
 
-    <!-- TABS -->
     <div class="tabs-wrapper">
         <button class="tab-btn active" onclick="cambiarTab('lexico', this)">Analizador Léxico</button>
-        <button class="tab-btn"        onclick="cambiarTab('sintactico', this)">Analizador Sintáctico</button>
+        <button class="tab-btn" onclick="cambiarTab('sintactico', this)">Analizador Sintáctico</button>
+        <button class="tab-btn" onclick="cambiarTab('semantico', this)">Analizador Semántico</button>
     </div>
 
     <!-- PESTAÑA 1 — LÉXICO -->
     <div id="tab-lexico" class="tab-panel active">
         <div class="main-content">
-
-            <!-- Panel izquierdo -->
             <div class="source-panel">
                 <h2>Código Fuente</h2>
                 <div class="code-editor-wrapper">
@@ -72,7 +70,7 @@
                             <div class="token-examples">
                                 <span class="token-example">Y</span><span class="token-example">O</span>
                                 <span class="token-example">==</span><span class="token-example">!=</span>
-                                <span class="token-example">&gt;=</span>
+                                <span class="token-example">>=</span>
                             </div>
                         </div>
                         <div class="token-category" style="border-left-color:#0a2472">
@@ -87,7 +85,6 @@
                 </div>
             </div>
 
-            <!-- Panel derecho -->
             <div class="results-panel">
                 <h2>Resultados del Análisis</h2>
                 <div class="stats" id="estadisticas">
@@ -100,7 +97,9 @@
                 <h3>Tabla de Tokens</h3>
                 <div class="table-container">
                     <table id="tabla-tokens">
-                        <thead><tr><th>Token</th><th>Tipo</th></tr></thead>
+                        <thead>
+                            <tr><th>Token</th><th>Tipo</th></tr>
+                        </thead>
                         <tbody id="token-body"></tbody>
                     </table>
                 </div>
@@ -112,8 +111,6 @@
     <!-- PESTAÑA 2 — SINTÁCTICO -->
     <div id="tab-sintactico" class="tab-panel">
         <div class="main-content">
-
-            <!-- Panel izquierdo -->
             <div class="source-panel">
                 <h2>Código Fuente</h2>
                 <div class="code-editor-wrapper">
@@ -124,7 +121,6 @@
                     <button onclick="analizarSintactico()" class="primary" id="sint-analyze-btn">Analizar</button>
                 </div>
 
-                <!-- Gramática del lenguaje -->
                 <div class="language-manual" style="margin-top:20px">
                     <div class="manual-header" onclick="toggleGramatica()">
                         <h3>Gramática BNF</h3>
@@ -162,16 +158,11 @@ cond_comb   → condicion ( (Y|O|NO) condicion )*</pre>
                 </div>
             </div>
 
-            <!-- Panel derecho -->
             <div class="results-panel">
                 <h2>Árbol Sintáctico</h2>
-
-                <!-- Banner de resultado -->
                 <div class="resultado-banner idle" id="sint-banner">
-                    ⏳ Esperando código para analizar…
+                    Esperando código para analizar...
                 </div>
-
-                <!-- Stats -->
                 <div class="stats-sint" id="sint-stats" style="display:none">
                     <div class="stat-sint">
                         <div class="val" id="sint-sentencias">0</div>
@@ -186,17 +177,13 @@ cond_comb   → condicion ( (Y|O|NO) condicion )*</pre>
                         <div class="lbl">Profundidad</div>
                     </div>
                 </div>
-
-                <!-- Sub-pestañas árbol -->
                 <div class="subtabs" id="sint-subtabs" style="display:none">
                     <button class="subtab-btn active" onclick="cambiarSubtab('texto', this)">Texto</button>
-                    <button class="subtab-btn"        onclick="cambiarSubtab('visual', this)">Visual</button>
+                    <button class="subtab-btn" onclick="cambiarSubtab('visual', this)">Visual</button>
                 </div>
-
                 <div id="subtab-texto" class="subtab-panel active">
                     <pre class="arbol-texto" id="sint-arbol-texto">-- El árbol aparecerá aquí --</pre>
                 </div>
-
                 <div id="subtab-visual" class="subtab-panel">
                     <div id="arbol-visual-wrap">
                         <svg id="arbol-svg" width="800" height="400"></svg>
@@ -205,108 +192,177 @@ cond_comb   → condicion ( (Y|O|NO) condicion )*</pre>
             </div>
         </div>
     </div>
+
+    <!-- PESTAÑA 3 — SEMÁNTICO -->
+    <div id="tab-semantico" class="tab-panel">
+        <div class="main-content">
+            <div class="source-panel">
+                <h2>Código Fuente</h2>
+                <div class="code-editor-wrapper">
+                    <textarea id="codigo-semantico" placeholder="Escribe tu código aquí..."></textarea>
+                </div>
+                <div class="buttons">
+                    <button onclick="seleccionarArchivo('semantico')">Seleccionar Archivo</button>
+                    <button onclick="analizarSemantico()" class="primary" id="sem-analyze-btn">Analizar</button>
+                </div>
+
+                <div class="language-manual" style="margin-top:20px">
+                    <div class="manual-header" onclick="toggleSemRules()">
+                        <h3>Reglas Semánticas (E001 - E016)</h3>
+                        <span class="toggle-icon" id="semRulesToggle">▼</span>
+                    </div>
+                    <div class="manual-content" id="semRulesContent">
+                        <div class="token-category" style="border-left-color:#ef4444">
+                            <div class="category-title" style="color:#991b1b">Reglas para Usuarios y Grupos</div>
+                            <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1e293b;margin-top:8px;line-height:1.7">
+R1  — Un usuario no puede registrarse dos veces (E001)
+R2  — Un usuario debe existir antes de operar (E002)
+R3  — Se requiere sesion activa (E003)
+R4  — Los roles solo se asignan a usuarios existentes (E002)
+R5  — No pueden existir dos grupos con el mismo nombre (E004)
+R6  — Un usuario solo puede asignarse a un grupo existente (E005)</pre>
+                        </div>
+                        <div class="token-category" style="border-left-color:#f59e0b">
+                            <div class="category-title" style="color:#92400e">Reglas para Tareas y Notificaciones</div>
+                            <pre style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#1e293b;margin-top:8px;line-height:1.7">
+R8  — No pueden existir dos tareas con el mismo nombre (E006)
+R9  — Una tarea solo puede asignarse a un usuario existente (E002)
+R11 — No se puede dividir una tarea que ya tiene subtareas (E009)
+R12 — Un usuario no puede autoevaluar tareas de otro (E010)
+R13 — La calificacion debe ser un numero entre 0 y 100 (E011)
+R20 — El destinatario de una notificacion debe existir (E002)</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-panel">
+                <h2>Resultado del Analisis Semantico</h2>
+                <div class="resultado-banner idle" id="sem-banner">
+                    Esperando codigo para analizar...
+                </div>
+
+                <div class="stats-sint" id="sem-stats" style="display:none">
+                    <div class="stat-sint">
+                        <div class="val" id="sem-usuarios">0</div>
+                        <div class="lbl">Usuarios</div>
+                    </div>
+                    <div class="stat-sint">
+                        <div class="val" id="sem-grupos">0</div>
+                        <div class="lbl">Grupos</div>
+                    </div>
+                    <div class="stat-sint">
+                        <div class="val" id="sem-tareas">0</div>
+                        <div class="lbl">Tareas</div>
+                    </div>
+                    <div class="stat-sint">
+                        <div class="val" id="sem-listas">0</div>
+                        <div class="lbl">Listas/Vistas</div>
+                    </div>
+                </div>
+
+                <div class="subtabs" id="sem-subtabs" style="display:none">
+                    <button class="subtab-btn active" onclick="cambiarSubtabSem('tabla', this)">Tabla de Simbolos</button>
+                    <button class="subtab-btn" onclick="cambiarSubtabSem('log', this)">Log de Construccion</button>
+                </div>
+
+                <div id="subtab-sem-tabla" class="subtab-panel active">
+                    <div class="table-container" style="max-height: 380px;">
+                        <table id="tabla-simbolos">
+                            <thead>
+                                <tr>
+                                    <th>Identificador</th>
+                                    <th>Categoria</th>
+                                    <th>Tipo</th>
+                                    <th>Valor</th>
+                                    <th>Linea</th>
+                                    <th>Contexto</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-simbolos-body">
+                                <tr><td colspan="6">-- No se ha realizado un analisis aun --</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="subtab-sem-log" class="subtab-panel">
+                    <div class="arbol-texto" style="max-height: 420px; overflow-y: auto; background: #1e1e2e;">
+                        <pre id="log-construccion" style="color: #a5f3c3; margin: 0;">-- El log aparecera aqui --</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-<!-- CodeMirror -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
 <script>
-// ══════════════════════════════════════════════════════
-// TABS
-// ══════════════════════════════════════════════════════
-function cambiarTab(nombre, btn) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('tab-' + nombre).classList.add('active');
-    btn.classList.add('active');
-    if (nombre === 'sintactico' && window.editorSint) {
-        setTimeout(() => window.editorSint.refresh(), 50);
-    }
-    if (nombre === 'lexico' && window.editorLex) {
-        setTimeout(() => window.editorLex.refresh(), 50);
-    }
-}
+// Configuracion de CodeMirror
+const KEYWORDS = [
+    'REG\\.USR','ING\\.USR','SALIR','MENU','CRE\\.USR','CRE\\.GRP',
+    'CRE\\.TAR\\.GRP','CRE\\.TAR\\.IND','CRE\\.TAR','VER\\.TAR\\.IND',
+    'ASIG\\.TAR','ASIG\\.USR','VER\\.AVAN','CRE\\.SUBTAR','DIV\\.TAR',
+    'AUTO\\.EVAL','CAL','REC\\.TAR','CADA','HASTA','HOY',
+    'ETIQ\\.TAR','ETIQ','AGREGAR','FILTRO\\.TAR','VISTA','VER\\.VISTA',
+    'NOTIF\\.CUANDO','NOTIF\\.RECORDAR','ENVIAR','SUSCRIBIR','EST\\.TAR','USR','TAR',
+    'IMPORT','EXPORTAR\\.TAR','USAR\\.BIB',
+    'EST\\.PEN','EST\\.ACT','EST\\.REV','EST\\.COR','EST\\.APROB','EST\\.RECH','EST\\.FIN',
+    'PRI\\.URG','PRI\\.ALT','PRI\\.MED','PRI\\.BAJ',
+    'ROL\\.COORD','ROL\\.MIEM',
+    'PROX\\.LUN','PROX\\.MAR','PROX\\.MIE','PROX\\.JUE','PROX\\.VIE','PROX\\.SAB','PROX\\.DOM',
+    'FIN\\.MES','FIN\\.SEM','INI\\.MES','INI\\.SEM',
+    'DIA','DIAS','SEMANA','SEMANAS','MES','MESES','ANNO',
+    'DES','FEC','EN\\.LIS','COM\\.MEJ','COM\\.AVAN','COM\\.ASIG','COM',
+    'CRE\\.LIS','VER\\.LIS','AG\\.LIS','ELIM\\.LIS','LIS\\.TIT','LIS\\.DESC',
+    'ENV\\.MSG','ENV\\.ENL','VER\\.MSG',
+    'Y','O','NO'
+];
+const KW_REGEX = new RegExp('^(' + KEYWORDS.join('|') + ')\\b');
 
-function cambiarSubtab(nombre, btn) {
-    document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.subtab-panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('subtab-' + nombre).classList.add('active');
-}
-
-// ══════════════════════════════════════════════════════
-// CODE MIRROR — modo compartido
-// ══════════════════════════════════════════════════════
-document.addEventListener('DOMContentLoaded', function () {
-
-    const KEYWORDS = [
-        'REG\\.USR','ING\\.USR','SALIR','MENU','CRE\\.USR','CRE\\.GRP',
-        'CRE\\.TAR\\.GRP','CRE\\.TAR\\.IND','CRE\\.TAR','VER\\.TAR\\.IND',
-        'ASIG\\.TAR','ASIG\\.USR','VER\\.AVAN','CRE\\.SUBTAR','DIV\\.TAR',
-        'AUTO\\.EVAL','CAL','REC\\.TAR','CADA','HASTA','HOY',
-        'ETIQ\\.TAR','ETIQ','AGREGAR','FILTRO\\.TAR','VISTA','VER\\.VISTA',
-        'NOTIF\\.CUANDO','NOTIF\\.RECORDAR','ENVIAR','SUSCRIBIR','EST\\.TAR','USR','TAR',
-        'IMPORT','EXPORTAR\\.TAR','USAR\\.BIB',
-        'EST\\.PEN','EST\\.ACT','EST\\.REV','EST\\.COR','EST\\.APROB','EST\\.RECH','EST\\.FIN',
-        'PRI\\.URG','PRI\\.ALT','PRI\\.MED','PRI\\.BAJ',
-        'ROL\\.COORD','ROL\\.MIEM',
-        'PROX\\.LUN','PROX\\.MAR','PROX\\.MIE','PROX\\.JUE','PROX\\.VIE','PROX\\.SAB','PROX\\.DOM',
-        'FIN\\.MES','FIN\\.SEM','INI\\.MES','INI\\.SEM',
-        'DIA','DIAS','SEMANA','SEMANAS','MES','MESES','ANNO',
-        'DES','FEC','EN\\.LIS','COM\\.MEJ','COM\\.AVAN','COM\\.ASIG','COM',
-        'CRE\\.LIS','VER\\.LIS','AG\\.LIS','ELIM\\.LIS','LIS\\.TIT','LIS\\.DESC',
-        'ENV\\.MSG','ENV\\.ENL','VER\\.MSG',
-        'Y','O','NO'
-    ];
-    const KW_REGEX = new RegExp('^(' + KEYWORDS.join('|') + ')\\b');
-
-    CodeMirror.defineMode('lan-mode', function () {
-        return {
-            token: function (stream) {
-                if (stream.match(/\d{4}-\d{2}-\d{2}/))  return 'date';
-                if (stream.match(/\d{1,2}:\d{2}/))       return 'number';
-                if (stream.match(/"[^"]*"/))              return 'string';
-                if (stream.match(/==/))                   return 'operator';
-                if (stream.match(/!=/))                   return 'operator';
-                if (stream.match(/>=/))                   return 'operator';
-                if (stream.match(/<=/))                   return 'operator';
-                if (stream.match(KW_REGEX))               return 'keyword';
-                if (stream.match(/\b\d+\b/))              return 'number';
-                if (stream.match(/[a-z][a-z0-9_]*/))     return 'variable';
-                if (stream.match(/[A-Za-záéíóúÁÉÍÓÚñÑ]+/)) return 'string';
-                if (stream.match(/[();,+\-]/))            return 'bracket';
-                stream.next();
-                return null;
-            }
-        };
-    });
-
-    const cmOpts = {
-        lineNumbers: true,
-        mode: 'lan-mode',
-        theme: 'eclipse',
-        indentUnit: 4,
-        smartIndent: true,
-        lineWrapping: true,
-        matchBrackets: true,
+CodeMirror.defineMode('lan-mode', function () {
+    return {
+        token: function (stream) {
+            if (stream.match(/\d{4}-\d{2}-\d{2}/))  return 'date';
+            if (stream.match(/\d{1,2}:\d{2}/))       return 'number';
+            if (stream.match(/"[^"]*"/))              return 'string';
+            if (stream.match(/==/))                   return 'operator';
+            if (stream.match(/!=/))                   return 'operator';
+            if (stream.match(/>=/))                   return 'operator';
+            if (stream.match(/<=/))                   return 'operator';
+            if (stream.match(KW_REGEX))               return 'keyword';
+            if (stream.match(/\b\d+\b/))              return 'number';
+            if (stream.match(/[a-z][a-z0-9_]*/))     return 'variable';
+            if (stream.match(/[A-Za-záéíóúÁÉÍÓÚñÑ]+/)) return 'string';
+            if (stream.match(/[();,+\-]/))            return 'bracket';
+            stream.next();
+            return null;
+        }
     };
+});
 
-    // ── Editor léxico ──
-    window.editorLex = CodeMirror.fromTextArea(
-        document.getElementById('codigo-lexico'), cmOpts
-    );
+const cmOpts = {
+    lineNumbers: true,
+    mode: 'lan-mode',
+    theme: 'eclipse',
+    indentUnit: 4,
+    smartIndent: true,
+    lineWrapping: true,
+    matchBrackets: true,
+};
+
+document.addEventListener('DOMContentLoaded', function () {
+    window.editorLex = CodeMirror.fromTextArea(document.getElementById('codigo-lexico'), cmOpts);
     window.editorLex.setValue(
 `CRE.TAR.GRP(Modelo ER) DES(Diseñar el diagrama) FEC(PROX.LUN) PRI.ALT;
 ASIG.TAR(Modelo ER) ASIG.USR(juan);
 REC.TAR(Revision) CADA(SEMANA) HASTA(2026-12-31);`
     );
 
-    // ── Editor sintáctico ──
-    window.editorSint = CodeMirror.fromTextArea(
-        document.getElementById('codigo-sintactico'), cmOpts
-    );
+    window.editorSint = CodeMirror.fromTextArea(document.getElementById('codigo-sintactico'), cmOpts);
     window.editorSint.setValue(
 `IMPORT("proyecto_base.lan");
-CRE.TAR.GRP(Modelo ER) DES(Diseñar el diagrama entidad-relación) FEC(PROX.LUN) PRI.ALT;
+CRE.TAR.GRP(Modelo ER) DES(Diseñar el diagrama entidad-relacion) FEC(PROX.LUN) PRI.ALT;
 ETIQ.TAR(Modelo ER) AGREGAR("urgente", "diseno");
 ASIG.TAR(Modelo ER) ASIG.USR(juan);
 REC.TAR(Revision semanal) CADA(SEMANA) HASTA(2026-12-31);
@@ -316,17 +372,53 @@ VER.VISTA("criticas");
 EXPORTAR.TAR("Modelo ER") A("modulo_diseno.lan");`
     );
 
-    setTimeout(() => toggleManual(), 500);
+    window.editorSem = CodeMirror.fromTextArea(document.getElementById('codigo-semantico'), cmOpts);
+    window.editorSem.setValue(
+`REG.USR(juan, "Juan Perez", ROL.COORD);
+REG.USR(maria, "Maria Gomez", ROL.MIEM);
+CRE.GRP(Equipo Diseno) ASIG.USR(juan) ASIG.USR(maria);
+ING.USR(juan);
+CRE.TAR.GRP(Modelo ER) DES(Diseñar diagrama) FEC(2026-06-15) PRI.ALT;
+ASIG.TAR(Modelo ER) ASIG.USR(juan);
+CRE.LIS LIS.TIT("Sprint 1") LIS.DESC("Tareas del primer sprint");
+AG.LIS("Sprint 1") EN.LIS(Modelo ER);
+FILTRO.TAR(PRI.ALT Y EST.PEN) VISTA("criticas");
+VER.VISTA("criticas");
+NOTIF.CUANDO(EST.TAR(Modelo ER) == EST.ACT) ENVIAR(juan);`
+    );
 });
 
-// ══════════════════════════════════════════════════════
-// LÉXICO
-// ══════════════════════════════════════════════════════
+// Funciones de pestanas
+function cambiarTab(nombre, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + nombre).classList.add('active');
+    btn.classList.add('active');
+    if (nombre === 'sintactico' && window.editorSint) setTimeout(() => window.editorSint.refresh(), 50);
+    if (nombre === 'lexico' && window.editorLex) setTimeout(() => window.editorLex.refresh(), 50);
+    if (nombre === 'semantico' && window.editorSem) setTimeout(() => window.editorSem.refresh(), 50);
+}
+
+function cambiarSubtab(nombre, btn) {
+    document.querySelectorAll('#tab-sintactico .subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#tab-sintactico .subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('subtab-' + nombre).classList.add('active');
+}
+
+function cambiarSubtabSem(nombre, btn) {
+    document.querySelectorAll('#tab-semantico .subtab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#tab-semantico .subtab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('subtab-sem-' + nombre).classList.add('active');
+}
+
+// Lexico
 async function analizarLexico() {
     const btn = document.getElementById('lex-analyze-btn');
     btn.classList.add('analyzing-token');
     try {
-        const res  = await fetch('/analizar', {
+        const res = await fetch('/analizar', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ codigo: window.editorLex.getValue() })
@@ -343,26 +435,25 @@ async function analizarLexico() {
 }
 
 function mostrarResultadosLexico(data) {
-    document.getElementById('errores').textContent       = data.estadisticas.errores;
-    document.getElementById('advertencias').textContent  = data.estadisticas.advertencias;
+    document.getElementById('errores').textContent = data.estadisticas.errores;
+    document.getElementById('advertencias').textContent = data.estadisticas.advertencias;
     document.getElementById('tokens_unicos').textContent = data.estadisticas.tokens_unicos;
-    document.getElementById('variables').textContent     = data.estadisticas.variables;
-    document.getElementById('funciones').textContent     = data.estadisticas.funciones;
+    document.getElementById('variables').textContent = data.estadisticas.variables;
+    document.getElementById('funciones').textContent = data.estadisticas.funciones;
 
     const tbody = document.getElementById('token-body');
     tbody.innerHTML = '';
     data.tokens.forEach((token, i) => {
         setTimeout(() => {
-            const row  = tbody.insertRow();
+            const row = tbody.insertRow();
             row.style.opacity = '0';
             row.style.transform = 'translateY(8px)';
-            const cls  = 'token-' + token.tipo.toLowerCase().replace(/_/g, '-');
-            row.insertCell(0).innerHTML = `<span class="${cls}" style="color:${token.color}">${token.lexema}</span>`;
-            row.insertCell(1).innerHTML = `<span class="${cls}">${token.tipo}</span>`;
+            row.insertCell(0).innerHTML = `<span style="color:${token.color}">${token.lexema}</span>`;
+            row.insertCell(1).innerHTML = `<span>${token.tipo}</span>`;
             setTimeout(() => {
                 row.style.transition = 'all 0.25s ease';
-                row.style.opacity    = '1';
-                row.style.transform  = 'translateY(0)';
+                row.style.opacity = '1';
+                row.style.transform = 'translateY(0)';
             }, 40);
         }, i * 60);
     });
@@ -370,20 +461,17 @@ function mostrarResultadosLexico(data) {
     const resumen = document.getElementById('resumen-tipos');
     resumen.innerHTML = '<h3>Resumen por tipo</h3>';
     Object.entries(data.estadisticas.conteo_tipos).forEach(([tipo, cnt]) => {
-        const cls = 'token-' + tipo.toLowerCase().replace(/_/g, '-');
-        resumen.innerHTML += `<div class="${cls}">${tipo}: ${cnt}</div>`;
+        resumen.innerHTML += `<div>${tipo}: ${cnt}</div>`;
     });
 }
 
-// ══════════════════════════════════════════════════════
-// SINTÁCTICO
-// ══════════════════════════════════════════════════════
+// Sintactico
 async function analizarSintactico() {
     const btn = document.getElementById('sint-analyze-btn');
-    btn.textContent = '⏳ Analizando…';
+    btn.textContent = 'Analizando...';
     btn.disabled = true;
     try {
-        const res  = await fetch('/analizar-sintactico', {
+        const res = await fetch('/analizar-sintactico', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ codigo: window.editorSint.getValue() })
@@ -392,14 +480,14 @@ async function analizarSintactico() {
         mostrarResultadosSintactico(data);
     } catch (e) {
         console.error(e);
-        setBanner('err', 'Error de conexión con el servidor');
+        setSintBanner('err', 'Error de conexion con el servidor');
     } finally {
         btn.textContent = 'Analizar';
         btn.disabled = false;
     }
 }
 
-function setBanner(tipo, texto) {
+function setSintBanner(tipo, texto) {
     const b = document.getElementById('sint-banner');
     b.className = 'resultado-banner ' + tipo;
     b.textContent = texto;
@@ -407,67 +495,174 @@ function setBanner(tipo, texto) {
 
 function mostrarResultadosSintactico(data) {
     if (data.exito) {
-        setBanner('ok', 'Cadena aceptada — Programa sintácticamente correcto');
-
-        // Stats
+        setSintBanner('ok', 'Cadena aceptada — Programa sintacticamente correcto');
         const st = data.estadisticas;
         document.getElementById('sint-stats').style.display = 'grid';
         document.getElementById('sint-sentencias').textContent = st.sentencias;
-        document.getElementById('sint-nodos').textContent      = st.nodos_totales;
-        document.getElementById('sint-prof').textContent       = st.profundidad;
-
-        // Texto árbol
-        document.getElementById('sint-arbol-texto').textContent =
-            'PROGRAMA\n' + data.texto_arbol.replace(/^PROGRAMA\n/, '');
-
-        // Subtabs visibles
+        document.getElementById('sint-nodos').textContent = st.nodos_totales;
+        document.getElementById('sint-prof').textContent = st.profundidad;
+        document.getElementById('sint-arbol-texto').textContent = 'PROGRAMA\n' + data.texto_arbol.replace(/^PROGRAMA\n/, '');
         document.getElementById('sint-subtabs').style.display = 'flex';
-
-        // Árbol visual
         if (data.arbol_json) dibujarArbol(data.arbol_json);
-
     } else {
-        setBanner('err', 'Error sintáctico: ' + data.mensaje);
-        document.getElementById('sint-stats').style.display    = 'none';
-        document.getElementById('sint-subtabs').style.display  = 'none';
-        document.getElementById('sint-arbol-texto').textContent =
-            '-- Error sintáctico --\n\n' + data.mensaje;
+        setSintBanner('err', 'Error sintactico: ' + data.mensaje);
+        document.getElementById('sint-stats').style.display = 'none';
+        document.getElementById('sint-subtabs').style.display = 'none';
+        document.getElementById('sint-arbol-texto').textContent = '-- Error sintactico --\n\n' + data.mensaje;
     }
 }
 
-// ══════════════════════════════════════════════════════
-// ÁRBOL VISUAL SVG
-// ══════════════════════════════════════════════════════
+// Semantico
+async function analizarSemantico() {
+    const btn = document.getElementById('sem-analyze-btn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Analizando...';
+    btn.disabled = true;
+    try {
+        const res = await fetch('/analizar-semantico', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ codigo: window.editorSem.getValue() })
+        });
+        const data = await res.json();
+        mostrarResultadosSemantico(data);
+    } catch (e) {
+        console.error(e);
+        setSemBanner('err', 'Error de conexion con el servidor');
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
 
+function setSemBanner(tipo, texto) {
+    const b = document.getElementById('sem-banner');
+    b.className = 'resultado-banner ' + tipo;
+    b.textContent = texto;
+}
+
+function mostrarResultadosSemantico(data) {
+    if (data.exito) {
+        setSemBanner('ok', 'Analisis semantico correcto. El programa es valido.');
+        document.getElementById('sem-stats').style.display = 'grid';
+        document.getElementById('sem-subtabs').style.display = 'flex';
+
+        if (data.estadisticas) {
+            document.getElementById('sem-usuarios').textContent = data.estadisticas.total_usuarios || 0;
+            document.getElementById('sem-grupos').textContent = data.estadisticas.total_grupos || 0;
+            document.getElementById('sem-tareas').textContent = data.estadisticas.total_tareas || 0;
+            document.getElementById('sem-listas').textContent = (data.estadisticas.total_listas || 0);
+        }
+
+        const tbody = document.getElementById('tabla-simbolos-body');
+        tbody.innerHTML = '';
+        if (data.tabla_simbolos.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6">-- No hay simbolos declarados --</td></tr>';
+        } else {
+            data.tabla_simbolos.forEach(entrada => {
+                const row = tbody.insertRow();
+                row.insertCell(0).textContent = entrada.identificador || '—';
+                row.insertCell(1).textContent = entrada.categoria || '—';
+                row.insertCell(2).textContent = entrada.tipo || '—';
+                let valorStr = entrada.valor || '—';
+                if (entrada.categoria === 'GRUPO' && entrada.miembros) {
+                    valorStr = '[' + entrada.miembros.join(', ') + ']';
+                } else if (entrada.categoria === 'LISTA' && entrada.descripcion !== '—') {
+                    valorStr = entrada.descripcion;
+                }
+                row.insertCell(3).textContent = valorStr.length > 30 ? valorStr.substring(0, 27) + '...' : valorStr;
+                row.insertCell(4).textContent = entrada.linea || '—';
+                row.insertCell(5).textContent = entrada.contexto !== '—' ? entrada.contexto : '—';
+            });
+        }
+
+        const logPre = document.getElementById('log-construccion');
+        if (data.log_pasos && data.log_pasos.length > 0) {
+            let logText = '';
+            data.log_pasos.forEach(p => {
+                logText += 'Paso ' + String(p.paso).padStart(2, '0') + ' [' + p.accion.padEnd(10) + '] ';
+                logText += '(Linea ' + (p.linea || '?') + ')  ' + p.detalle + '\n';
+            });
+            logPre.textContent = logText;
+        } else {
+            logPre.textContent = '-- No se generaron pasos en el log --';
+        }
+    } else {
+        setSemBanner('err', 'Error semantico: ' + data.mensaje);
+        document.getElementById('sem-stats').style.display = 'none';
+        document.getElementById('sem-subtabs').style.display = 'none';
+        document.getElementById('tabla-simbolos-body').innerHTML = '<tr><td colspan="6">-- Analisis fallido --</td></tr>';
+        let errorDetail = data.detalle_error || data.mensaje;
+        document.getElementById('log-construccion').textContent = '-- ERROR --\n' + errorDetail;
+    }
+}
+
+// Utilidades
+function seleccionarArchivo(editor) {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.txt,.lan';
+    input.onchange = e => {
+        const reader = new FileReader();
+        reader.onload = ev => {
+            if (editor === 'lexico') window.editorLex.setValue(ev.target.result);
+            if (editor === 'sintactico') window.editorSint.setValue(ev.target.result);
+            if (editor === 'semantico') window.editorSem.setValue(ev.target.result);
+        };
+        reader.readAsText(e.target.files[0]);
+    };
+    input.click();
+}
+
+function toggleManual() {
+    const c = document.getElementById('manualContent');
+    const t = document.getElementById('manualToggle');
+    c.classList.toggle('expanded');
+    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
+}
+
+function toggleGramatica() {
+    const c = document.getElementById('gramaticaContent');
+    const t = document.getElementById('gramaticaToggle');
+    c.classList.toggle('expanded');
+    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
+}
+
+function toggleSemRules() {
+    const c = document.getElementById('semRulesContent');
+    const t = document.getElementById('semRulesToggle');
+    c.classList.toggle('expanded');
+    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
+}
+
+// Dibujar arbol SVG
 const COLORES_NODO = {
-    PROGRAMA:             ['#0a2472', '#ffffff'],
-    SENT_CREAR_TAREA:     ['#1e3a8a', '#ffffff'],
-    SENT_TAREA_RECURRENTE:['#1e3a8a', '#ffffff'],
-    SENT_FILTRO:          ['#1e3a8a', '#ffffff'],
-    SENT_NOTIF_CUANDO:    ['#1e3a8a', '#ffffff'],
-    SENT_NOTIF_RECORDAR:  ['#1e3a8a', '#ffffff'],
-    SENT_IMPORTAR:        ['#6d28d9', '#ffffff'],
-    SENT_EXPORTAR:        ['#6d28d9', '#ffffff'],
-    SENT_ETIQUETAR:       ['#0e7490', '#ffffff'],
-    SENT_VER_VISTA:       ['#0e7490', '#ffffff'],
-    SENT_ASIGNAR_TAREA:   ['#1e3a8a', '#ffffff'],
-    FRECUENCIA:           ['#065f46', '#ffffff'],
-    LIMITE:               ['#065f46', '#ffffff'],
-    CONDICION_COMBINADA:  ['#92400e', '#ffffff'],
-    CONDICION:            ['#b45309', '#ffffff'],
-    EXPR_FECHA:           ['#166534', '#ffffff'],
-    FECHA_MOD:            ['#166534', '#ffffff'],
-    DESCRIPCION:          ['#374151', '#ffffff'],
-    PRIORIDAD:            ['#9a3412', '#ffffff'],
-    ESTADO:               ['#1e40af', '#ffffff'],
-    AGREGAR:              ['#0e7490', '#ffffff'],
-    VISTA:                ['#0e7490', '#ffffff'],
-    ENVIAR:               ['#4c1d95', '#ffffff'],
+    PROGRAMA: ['#0a2472', '#ffffff'],
+    SENT_CREAR_TAREA: ['#1e3a8a', '#ffffff'],
+    SENT_TAREA_RECURRENTE: ['#1e3a8a', '#ffffff'],
+    SENT_FILTRO: ['#1e3a8a', '#ffffff'],
+    SENT_NOTIF_CUANDO: ['#1e3a8a', '#ffffff'],
+    SENT_NOTIF_RECORDAR: ['#1e3a8a', '#ffffff'],
+    SENT_IMPORTAR: ['#6d28d9', '#ffffff'],
+    SENT_EXPORTAR: ['#6d28d9', '#ffffff'],
+    SENT_ETIQUETAR: ['#0e7490', '#ffffff'],
+    SENT_VER_VISTA: ['#0e7490', '#ffffff'],
+    SENT_ASIGNAR_TAREA: ['#1e3a8a', '#ffffff'],
+    FRECUENCIA: ['#065f46', '#ffffff'],
+    LIMITE: ['#065f46', '#ffffff'],
+    CONDICION_COMBINADA: ['#92400e', '#ffffff'],
+    CONDICION: ['#b45309', '#ffffff'],
+    EXPR_FECHA: ['#166534', '#ffffff'],
+    FECHA_MOD: ['#166534', '#ffffff'],
+    DESCRIPCION: ['#374151', '#ffffff'],
+    PRIORIDAD: ['#9a3412', '#ffffff'],
+    ESTADO: ['#1e40af', '#ffffff'],
+    AGREGAR: ['#0e7490', '#ffffff'],
+    VISTA: ['#0e7490', '#ffffff'],
+    ENVIAR: ['#4c1d95', '#ffffff'],
 };
 
 function colorNodo(nombre) {
     if (COLORES_NODO[nombre]) return COLORES_NODO[nombre];
-    // Hojas (lexemas literales)
     if (/^[A-Z.]+$/.test(nombre) || nombre.startsWith('"') || /^\d/.test(nombre)) {
         return ['#f1f5f9', '#0a2472'];
     }
@@ -477,10 +672,10 @@ function colorNodo(nombre) {
 function medirTexto(t) { return Math.max(t.length * 7.2 + 20, 60); }
 
 function calcLayout(nodo, profundidad = 0) {
-    const W  = medirTexto(nodo.nombre);
-    const H  = 28;
-    const PX = 12;   // padding horizontal entre hermanos
-    const PY = 54;   // padding vertical entre niveles
+    const W = medirTexto(nodo.nombre);
+    const H = 28;
+    const PX = 12;
+    const PY = 54;
 
     if (!nodo.hijos || nodo.hijos.length === 0) {
         nodo._w = W; nodo._h = H; nodo._depth = profundidad;
@@ -518,12 +713,11 @@ function posicionarNodos(nodo, x, y) {
 }
 
 function renderNodo(svg, nodo) {
-    const H  = 28;
-    const W  = medirTexto(nodo.nombre);
-    const x  = nodo._x - W / 2;
+    const H = 28;
+    const W = medirTexto(nodo.nombre);
+    const x = nodo._x - W / 2;
     const [bg, fg] = colorNodo(nodo.nombre);
 
-    // Líneas a hijos
     if (nodo.hijos) {
         nodo.hijos.forEach(h => {
             const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
@@ -538,7 +732,6 @@ function renderNodo(svg, nodo) {
         });
     }
 
-    // Rectángulo
     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
     rect.setAttribute('x', x);
     rect.setAttribute('y', nodo._y);
@@ -551,7 +744,6 @@ function renderNodo(svg, nodo) {
     rect.setAttribute('stroke-width', '1');
     svg.appendChild(rect);
 
-    // Texto
     const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
     text.setAttribute('x', nodo._x);
     text.setAttribute('y', nodo._y + H / 2 + 4);
@@ -560,9 +752,7 @@ function renderNodo(svg, nodo) {
     text.setAttribute('font-family', "'JetBrains Mono', monospace");
     text.setAttribute('font-size', '11');
     text.setAttribute('font-weight', '500');
-    text.textContent = nodo.nombre.length > 22
-        ? nodo.nombre.slice(0, 20) + '…'
-        : nodo.nombre;
+    text.textContent = nodo.nombre.length > 22 ? nodo.nombre.slice(0, 20) + '…' : nodo.nombre;
     svg.appendChild(text);
 }
 
@@ -575,42 +765,11 @@ function dibujarArbol(datos) {
 
     const totalW = datos._w + 20;
     const totalH = datos._h + 30;
-    svg.setAttribute('width',  totalW);
+    svg.setAttribute('width', totalW);
     svg.setAttribute('height', totalH);
     document.getElementById('arbol-visual-wrap').style.maxHeight = '520px';
 
     renderNodo(svg, datos);
-}
-
-// ══════════════════════════════════════════════════════
-// UTILIDADES COMPARTIDAS
-// ══════════════════════════════════════════════════════
-function seleccionarArchivo(editor) {
-    const input = document.createElement('input');
-    input.type = 'file'; input.accept = '.txt,.lan';
-    input.onchange = e => {
-        const reader = new FileReader();
-        reader.onload = ev => {
-            if (editor === 'lexico')    window.editorLex.setValue(ev.target.result);
-            if (editor === 'sintactico') window.editorSint.setValue(ev.target.result);
-        };
-        reader.readAsText(e.target.files[0]);
-    };
-    input.click();
-}
-
-function toggleManual() {
-    const c = document.getElementById('manualContent');
-    const t = document.getElementById('manualToggle');
-    c.classList.toggle('expanded');
-    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
-}
-
-function toggleGramatica() {
-    const c = document.getElementById('gramaticaContent');
-    const t = document.getElementById('gramaticaToggle');
-    c.classList.toggle('expanded');
-    t.textContent = c.classList.contains('expanded') ? '▲' : '▼';
 }
 </script>
 </body>

@@ -39,7 +39,6 @@ body {
     min-height: 100vh;
 }
 
-/* Patrón de fondo elegante */
 body::before {
     content: '';
     position: fixed;
@@ -55,7 +54,6 @@ body::before {
     z-index: 0;
 }
 
-/* Partículas flotantes decorativas */
 body::after {
     content: '';
     position: fixed;
@@ -96,31 +94,6 @@ h1 {
     position: relative;
 }
 
-h1::before {
-    content: '⚡';
-    position: absolute;
-    left: -40px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    opacity: 0.5;
-    background: none;
-    -webkit-text-fill-color: initial;
-}
-
-h1::after {
-    content: '⚡';
-    position: absolute;
-    right: -40px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 2rem;
-    opacity: 0.5;
-    background: none;
-    -webkit-text-fill-color: initial;
-}
-
-/* Tabs mejorados */
 .tabs-wrapper {
     display: flex;
     gap: 8px;
@@ -209,7 +182,6 @@ h3 {
     margin-bottom: 16px;
 }
 
-/* CodeMirror mejorado */
 .code-editor-wrapper {
     position: relative;
     margin-bottom: 24px;
@@ -245,7 +217,6 @@ h3 {
     color: #a0aec0;
 }
 
-/* Botones mejorados (conservando hover) */
 .buttons {
     display: flex;
     gap: 12px;
@@ -310,7 +281,6 @@ button.primary:hover {
     box-shadow: var(--shadow-lg), var(--glow-primary);
 }
 
-/* Stats mejorados */
 .stats {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -375,7 +345,6 @@ button.primary:hover {
     color: white;
 }
 
-/* Tabla mejorada */
 .table-container {
     max-height: 420px;
     overflow-y: auto;
@@ -440,7 +409,6 @@ tr:hover td {
     transform: scale(1.01);
 }
 
-/* Árbol sintáctico mejorado */
 .arbol-texto {
     background: #1e1e2e;
     color: #a5f3c3;
@@ -471,7 +439,6 @@ tr:hover td {
     box-shadow: var(--shadow-lg), var(--glow-primary);
 }
 
-/* Resultado banner */
 .resultado-banner {
     padding: 16px 24px;
     border-radius: 16px;
@@ -508,10 +475,9 @@ tr:hover td {
     border: 1px solid #94a3b8;
 }
 
-/* Stats sintáctico */
 .stats-sint {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
     margin-bottom: 24px;
 }
@@ -564,7 +530,6 @@ tr:hover td {
     font-weight: 500;
 }
 
-/* Sub-tabs */
 .subtabs {
     display: flex;
     gap: 12px;
@@ -599,7 +564,6 @@ tr:hover td {
 .subtab-panel { display: none; }
 .subtab-panel.active { display: block; animation: fadeIn 0.3s ease-out; }
 
-/* Manual mejorado */
 .language-manual {
     margin-top: 28px;
     background: white;
@@ -690,7 +654,6 @@ tr:hover td {
     box-shadow: var(--shadow-sm);
 }
 
-/* Animaciones */
 @keyframes pulse-glow {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
@@ -700,7 +663,38 @@ tr:hover td {
     animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
-/* Responsive mejorado */
+#tabla-simbolos {
+    font-size: 0.75rem;
+}
+
+#tabla-simbolos th {
+    padding: 12px 8px;
+    font-size: 0.7rem;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+}
+
+#tabla-simbolos td {
+    padding: 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+}
+
+.arbol-texto pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    line-height: 1.6;
+}
+
+.resultado-banner.err {
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    border-left: 5px solid var(--danger);
+}
+
+.resultado-banner.ok {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+    border-left: 5px solid var(--success);
+}
+
 @media (max-width: 1024px) {
     .main-content {
         grid-template-columns: 1fr;
@@ -715,8 +709,11 @@ tr:hover td {
         font-size: 2rem;
     }
 
-    h1::before, h1::after {
-        display: none;
+    #tabla-simbolos {
+        font-size: 0.65rem;
+    }
+    #tabla-simbolos th, #tabla-simbolos td {
+        padding: 6px 4px;
     }
 }
 
@@ -730,6 +727,10 @@ tr:hover td {
     }
 
     .stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-sint {
         grid-template-columns: repeat(2, 1fr);
     }
 
@@ -751,7 +752,6 @@ tr:hover td {
     }
 }
 
-/* SVG mejorado */
 #arbol-svg {
     display: block;
     margin: 0 auto;
@@ -775,7 +775,6 @@ tr:hover td {
     font-weight: 500;
 }
 
-/* Scrollbar general */
 ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
