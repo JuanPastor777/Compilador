@@ -8,130 +8,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/eclipse.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        /* ── Tabs ── */
-        .tabs-wrapper {
-            display: flex;
-            gap: 0;
-            margin-bottom: 28px;
-            border-bottom: 3px solid #e2e8f0;
-        }
-        .tab-btn {
-            padding: 14px 32px;
-            border: none;
-            background: transparent;
-            font-size: 1rem;
-            font-weight: 600;
-            color: #64748b;
-            cursor: pointer;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -3px;
-            border-radius: 0;
-            box-shadow: none;
-            transform: none !important;
-            letter-spacing: 0.3px;
-            transition: color 0.2s, border-color 0.2s;
-        }
-        .tab-btn:hover { color: #1e3a8a; }
-        .tab-btn.active {
-            color: #0a2472;
-            border-bottom-color: #3b82f6;
-        }
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
-
-        /* ── Árbol texto ── */
-        .arbol-texto {
-            background: #0f172a;
-            color: #86efac;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            line-height: 1.7;
-            padding: 20px;
-            border-radius: 14px;
-            overflow-x: auto;
-            white-space: pre;
-            max-height: 480px;
-            overflow-y: auto;
-            border: 1px solid #1e3a8a;
-        }
-
-        /* ── Árbol visual (SVG) ── */
-        #arbol-visual-wrap {
-            border: 1px solid #e2e8f0;
-            border-radius: 14px;
-            overflow: auto;
-            max-height: 500px;
-            background: #f8fafc;
-        }
-        #arbol-svg { display: block; }
-        .svg-node rect {
-            rx: 8; ry: 8;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,.12));
-        }
-        .svg-node text { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-
-        /* ── Banner resultado ── */
-        .resultado-banner {
-            padding: 14px 20px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .resultado-banner.ok  { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-        .resultado-banner.err { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
-        .resultado-banner.idle{ background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-
-        /* ── Stats sintáctico ── */
-        .stats-sint {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        .stat-sint {
-            background: linear-gradient(135deg, #0a2472, #1e3a8a);
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-            color: white;
-        }
-        .stat-sint .val { font-size: 1.8rem; font-weight: 700; }
-        .stat-sint .lbl { font-size: 0.78rem; opacity: .85; text-transform: uppercase; letter-spacing: .5px; }
-
-        /* ── Sub-tabs árbol ── */
-        .subtabs { display: flex; gap: 8px; margin-bottom: 14px; }
-        .subtab-btn {
-            padding: 8px 18px; border-radius: 20px; border: 1px solid #e2e8f0;
-            background: white; font-size: 0.85rem; font-weight: 500;
-            color: #64748b; cursor: pointer; transition: all 0.2s;
-            box-shadow: none; transform: none !important;
-        }
-        .subtab-btn.active { background: #1e3a8a; color: white; border-color: #1e3a8a; }
-        .subtab-panel { display: none; }
-        .subtab-panel.active { display: block; }
-
-        /* ── Botones de la pestaña sint ── */
-        #sint-analyze-btn { width: 100%; margin-top: 4px; }
-    </style>
 </head>
 <body>
 <div class="container">
     <h1>Compilador — Lenguaje de Gestión de Proyectos</h1>
 
-    <!-- ══════════ TABS ══════════ -->
+    <!-- TABS -->
     <div class="tabs-wrapper">
-        <button class="tab-btn active" onclick="cambiarTab('lexico', this)">🔤 Analizador Léxico</button>
-        <button class="tab-btn"        onclick="cambiarTab('sintactico', this)">🌳 Analizador Sintáctico</button>
+        <button class="tab-btn active" onclick="cambiarTab('lexico', this)">Analizador Léxico</button>
+        <button class="tab-btn"        onclick="cambiarTab('sintactico', this)">Analizador Sintáctico</button>
     </div>
 
-    <!-- ══════════════════════════════════════════════════
-         PESTAÑA 1 — LÉXICO (sin cambios)
-    ══════════════════════════════════════════════════ -->
+    <!-- PESTAÑA 1 — LÉXICO -->
     <div id="tab-lexico" class="tab-panel active">
         <div class="main-content">
 
@@ -142,13 +30,13 @@
                     <textarea id="codigo-lexico" placeholder="Escribe tu código aquí..."></textarea>
                 </div>
                 <div class="buttons">
-                    <button onclick="seleccionarArchivo('lexico')">📁 Seleccionar Archivo</button>
-                    <button onclick="analizarLexico()" class="primary" id="lex-analyze-btn">🔍 Analizar</button>
+                    <button onclick="seleccionarArchivo('lexico')">Seleccionar Archivo</button>
+                    <button onclick="analizarLexico()" class="primary" id="lex-analyze-btn">Analizar</button>
                 </div>
 
                 <div class="language-manual">
                     <div class="manual-header" onclick="toggleManual()">
-                        <h3>📚 Manual del Lenguaje</h3>
+                        <h3>Manual del Lenguaje</h3>
                         <span class="toggle-icon" id="manualToggle">▼</span>
                     </div>
                     <div class="manual-content" id="manualContent">
@@ -221,9 +109,7 @@
         </div>
     </div>
 
-    <!-- ══════════════════════════════════════════════════
-         PESTAÑA 2 — SINTÁCTICO
-    ══════════════════════════════════════════════════ -->
+    <!-- PESTAÑA 2 — SINTÁCTICO -->
     <div id="tab-sintactico" class="tab-panel">
         <div class="main-content">
 
@@ -234,14 +120,14 @@
                     <textarea id="codigo-sintactico" placeholder="Escribe tu código aquí..."></textarea>
                 </div>
                 <div class="buttons">
-                    <button onclick="seleccionarArchivo('sintactico')">📁 Seleccionar Archivo</button>
-                    <button onclick="analizarSintactico()" class="primary" id="sint-analyze-btn">🌳 Analizar</button>
+                    <button onclick="seleccionarArchivo('sintactico')">Seleccionar Archivo</button>
+                    <button onclick="analizarSintactico()" class="primary" id="sint-analyze-btn">Analizar</button>
                 </div>
 
                 <!-- Gramática del lenguaje -->
                 <div class="language-manual" style="margin-top:20px">
                     <div class="manual-header" onclick="toggleGramatica()">
-                        <h3>📐 Gramática BNF</h3>
+                        <h3>Gramática BNF</h3>
                         <span class="toggle-icon" id="gramaticaToggle">▼</span>
                     </div>
                     <div class="manual-content" id="gramaticaContent">
@@ -303,8 +189,8 @@ cond_comb   → condicion ( (Y|O|NO) condicion )*</pre>
 
                 <!-- Sub-pestañas árbol -->
                 <div class="subtabs" id="sint-subtabs" style="display:none">
-                    <button class="subtab-btn active" onclick="cambiarSubtab('texto', this)">📝 Texto</button>
-                    <button class="subtab-btn"        onclick="cambiarSubtab('visual', this)">🖼 Visual</button>
+                    <button class="subtab-btn active" onclick="cambiarSubtab('texto', this)">Texto</button>
+                    <button class="subtab-btn"        onclick="cambiarSubtab('visual', this)">Visual</button>
                 </div>
 
                 <div id="subtab-texto" class="subtab-panel active">
@@ -506,9 +392,9 @@ async function analizarSintactico() {
         mostrarResultadosSintactico(data);
     } catch (e) {
         console.error(e);
-        setBanner('err', '❌ Error de conexión con el servidor');
+        setBanner('err', 'Error de conexión con el servidor');
     } finally {
-        btn.textContent = '🌳 Analizar';
+        btn.textContent = 'Analizar';
         btn.disabled = false;
     }
 }
@@ -521,7 +407,7 @@ function setBanner(tipo, texto) {
 
 function mostrarResultadosSintactico(data) {
     if (data.exito) {
-        setBanner('ok', '✅ Cadena aceptada — Programa sintácticamente correcto');
+        setBanner('ok', 'Cadena aceptada — Programa sintácticamente correcto');
 
         // Stats
         const st = data.estadisticas;
@@ -541,7 +427,7 @@ function mostrarResultadosSintactico(data) {
         if (data.arbol_json) dibujarArbol(data.arbol_json);
 
     } else {
-        setBanner('err', '❌ Error sintáctico: ' + data.mensaje);
+        setBanner('err', 'Error sintáctico: ' + data.mensaje);
         document.getElementById('sint-stats').style.display    = 'none';
         document.getElementById('sint-subtabs').style.display  = 'none';
         document.getElementById('sint-arbol-texto').textContent =
