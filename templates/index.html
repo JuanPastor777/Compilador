@@ -275,12 +275,16 @@ R20 — El destinatario de una notificacion debe existir (E002)</pre>
                                     <th>Categoria</th>
                                     <th>Tipo</th>
                                     <th>Valor</th>
+                                    <th>Estado</th>
+                                    <th>Prioridad</th>
+                                    <th>Asignado a</th>
+                                    <th>Grupo</th>
+                                    <th>Sesion</th>
                                     <th>Linea</th>
-                                    <th>Contexto</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-simbolos-body">
-                                <tr><td colspan="6">-- No se ha realizado un analisis aun --</td></tr>
+                                <tr><td colspan="10">-- No se ha realizado un analisis aun --</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -541,6 +545,8 @@ function setSemBanner(tipo, texto) {
     b.textContent = texto;
 }
 
+// Reemplazar la función mostrarResultadosSemantico con esta versión mejorada
+
 function mostrarResultadosSemantico(data) {
     if (data.exito) {
         setSemBanner('ok', 'Analisis semantico correcto. El programa es valido.');
@@ -556,23 +562,52 @@ function mostrarResultadosSemantico(data) {
 
         const tbody = document.getElementById('tabla-simbolos-body');
         tbody.innerHTML = '';
+
+        const categoriaColores = {
+            'USUARIO': '#10b981',
+            'GRUPO': '#3b82f6',
+            'TAREA': '#f97316',
+            'LISTA': '#eab308',
+            'VISTA': '#8b5cf6',
+            'MODULO': '#6b7280',
+            'BIBLIOTECA': '#6b7280'
+        };
+
         if (data.tabla_simbolos.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6">-- No hay simbolos declarados --</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="10">-- No hay simbolos declarados --</td></tr>';
         } else {
             data.tabla_simbolos.forEach(entrada => {
                 const row = tbody.insertRow();
+
                 row.insertCell(0).textContent = entrada.identificador || '—';
-                row.insertCell(1).textContent = entrada.categoria || '—';
+
+                const categoria = entrada.categoria || '—';
+                const color = categoriaColores[categoria] || '#64748b';
+                const categoriaCell = row.insertCell(1);
+                categoriaCell.innerHTML = `<span class="categoria-badge" style="background-color: ${color};">${categoria}</span>`;
+
                 row.insertCell(2).textContent = entrada.tipo || '—';
+
                 let valorStr = entrada.valor || '—';
-                if (entrada.categoria === 'GRUPO' && entrada.miembros) {
-                    valorStr = '[' + entrada.miembros.join(', ') + ']';
-                } else if (entrada.categoria === 'LISTA' && entrada.descripcion !== '—') {
-                    valorStr = entrada.descripcion;
+                if (valorStr.length > 35) {
+                    valorStr = valorStr.substring(0, 32) + '...';
                 }
-                row.insertCell(3).textContent = valorStr.length > 30 ? valorStr.substring(0, 27) + '...' : valorStr;
-                row.insertCell(4).textContent = entrada.linea || '—';
-                row.insertCell(5).textContent = entrada.contexto !== '—' ? entrada.contexto : '—';
+                row.insertCell(3).textContent = valorStr;
+
+                row.insertCell(4).textContent = entrada.estado || 'PENDIENTE';
+                row.insertCell(5).textContent = entrada.prioridad || '—';
+                row.insertCell(6).textContent = entrada.asignado_a || '—';
+                row.insertCell(7).textContent = entrada.grupo || '—';
+
+                const activoCell = row.insertCell(8);
+                if (entrada.categoria === 'USUARIO') {
+                    const activo = entrada.activo || 'inactiva';
+                    activoCell.innerHTML = `<span class="sesion-badge ${activo === 'activa' ? 'sesion-activa' : 'sesion-inactiva'}">${activo}</span>`;
+                } else {
+                    activoCell.textContent = '—';
+                }
+
+                row.insertCell(9).textContent = entrada.linea || '—';
             });
         }
 
@@ -580,8 +615,15 @@ function mostrarResultadosSemantico(data) {
         if (data.log_pasos && data.log_pasos.length > 0) {
             let logText = '';
             data.log_pasos.forEach(p => {
-                logText += 'Paso ' + String(p.paso).padStart(2, '0') + ' [' + p.accion.padEnd(10) + '] ';
-                logText += '(Linea ' + (p.linea || '?') + ')  ' + p.detalle + '\n';
+                let badge = '';
+                if (p.accion === 'AGREGAR') badge = '[ADD]';
+                else if (p.accion === 'ACTUALIZAR') badge = '[UPD]';
+                else if (p.accion === 'VALIDAR') badge = '[OK]';
+                else badge = '[---]';
+
+                logText += badge + ' Paso ' + String(p.paso).padStart(2, '0') + ' ';
+                logText += '[' + p.accion.padEnd(10) + '] ';
+                logText += p.detalle + '\n';
             });
             logPre.textContent = logText;
         } else {
@@ -591,7 +633,7 @@ function mostrarResultadosSemantico(data) {
         setSemBanner('err', 'Error semantico: ' + data.mensaje);
         document.getElementById('sem-stats').style.display = 'none';
         document.getElementById('sem-subtabs').style.display = 'none';
-        document.getElementById('tabla-simbolos-body').innerHTML = '<tr><td colspan="6">-- Analisis fallido --</td></tr>';
+        document.getElementById('tabla-simbolos-body').innerHTML = '<tr><td colspan="10">-- Analisis fallido --</td></tr>';
         let errorDetail = data.detalle_error || data.mensaje;
         document.getElementById('log-construccion').textContent = '-- ERROR --\n' + errorDetail;
     }

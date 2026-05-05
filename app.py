@@ -81,12 +81,32 @@ def analizar_semantico():
 
     tabla_json = []
     for entrada in tabla_simbolos.a_lista():
-        entrada_serializable = {}
-        for k, v in entrada.items():
-            if isinstance(v, list):
-                entrada_serializable[k] = v
-            else:
-                entrada_serializable[k] = str(v) if not isinstance(v, (str, int, float, bool, type(None))) else v
+        valor = entrada.get('valor', '—')
+        if entrada.get('categoria') == 'GRUPO' and entrada.get('miembros'):
+            valor = '[' + ', '.join(entrada.get('miembros', [])) + ']'
+        elif entrada.get('categoria') == 'LISTA' and entrada.get('descripcion') and entrada.get('descripcion') != '—':
+            valor = entrada.get('descripcion')
+
+        grupo = entrada.get('grupo', '—')
+        if grupo == '—' and entrada.get('contexto') and entrada.get('contexto') != '—':
+            grupo = entrada.get('contexto')
+
+        activo = '—'
+        if entrada.get('categoria') == 'USUARIO':
+            activo = entrada.get('sesion', 'inactiva')
+
+        entrada_serializable = {
+            'identificador': entrada.get('identificador', '—'),
+            'categoria': entrada.get('categoria', '—'),
+            'tipo': entrada.get('tipo', '—'),
+            'valor': valor,
+            'estado': entrada.get('estado', 'PENDIENTE'),
+            'prioridad': entrada.get('prioridad', '—'),
+            'asignado_a': entrada.get('asignado_a', '—'),
+            'grupo': grupo,
+            'activo': activo,
+            'linea': entrada.get('linea', 0),
+        }
         tabla_json.append(entrada_serializable)
 
     log_json = [
@@ -94,7 +114,6 @@ def analizar_semantico():
             'paso': paso['paso'],
             'accion': paso['accion'],
             'detalle': paso['detalle'],
-            'linea': paso.get('linea', 0)
         }
         for paso in log_pasos
     ]
@@ -112,7 +131,7 @@ def analizar_semantico():
             'total_usuarios': len([e for e in tabla_json if e['categoria'] == 'USUARIO']),
             'total_grupos': len([e for e in tabla_json if e['categoria'] == 'GRUPO']),
             'total_tareas': len([e for e in tabla_json if e['categoria'] == 'TAREA']),
-            'total_listas': len([e for e in tabla_json if e['categoria'] == 'LISTA']),
+            'total_listas': len([e for e in tabla_json if e['categoria'] in ('LISTA', 'VISTA')]),
         }
 
     return jsonify(respuesta)

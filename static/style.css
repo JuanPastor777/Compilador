@@ -793,3 +793,80 @@ tr:hover td {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--primary-dark);
 }
+/* Estilos para los óvalos de categoría */
+.categoria-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: white;
+    text-align: center;
+    min-width: 80px;
+    letter-spacing: 0.3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+/* Estilos para el badge de sesión */
+.sesion-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.sesion-activa {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.sesion-inactiva {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+/* Estilos mejorados para la tabla de símbolos */
+#tabla-simbolos {
+    font-size: 0.7rem;
+    width: 100%;
+}
+
+#tabla-simbolos th {
+    padding: 10px 6px;
+    font-size: 0.7rem;
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+#tabla-simbolos td {
+    padding: 8px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    vertical-align: middle;
+}
+
+#tabla-simbolos tr:hover td {
+    background: linear-gradient(90deg, #f0f9ff, #e0f2fe);
+}
+
+/* Contenedor de la tabla con scroll */
+.table-container {
+    max-height: 450px;
+    overflow-x: auto;
+    overflow-y: auto;
+}
+
+/* Estilos mejorados para el log */
+.arbol-texto pre {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: #a5f3c3;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
